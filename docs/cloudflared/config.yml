@@ -1,0 +1,23 @@
+# Cloudflare Zero Trust tunnel config
+# /etc/cloudflared/config.yml
+#
+# Usage:
+#   cloudflared tunnel login
+#   cloudflared tunnel create ahnet-isp
+#   sudo cp docs/cloudflared/config.yml /etc/cloudflared/config.yml
+#   sudo cloudflared service install
+#   sudo systemctl restart cloudflared
+#
+# Replace TUNNEL_ID and the credentials path with the values printed by
+# `cloudflared tunnel create`.
+
+tunnel: TUNNEL_ID
+credentials-file: /etc/cloudflared/TUNNEL_ID.json
+
+ingress:
+  - hostname: isp.example.com
+    service: http://localhost:8879
+    originRequest:
+      noTLSVerify: true
+      httpHostHeader: isp.ahnet.local
+  - service: http_status:404

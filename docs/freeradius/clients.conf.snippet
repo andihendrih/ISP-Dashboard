@@ -1,0 +1,14 @@
+# Tambahkan ke /etc/freeradius/3.0/clients.conf
+# (jangan menimpa file utuh — ini snippet)
+client mikrotik-core {
+    ipaddr   = 10.10.10.1            # IP NAS / Mikrotik
+    secret   = SuperSecret123        # samakan dengan setting di Mikrotik
+    nas_type = mikrotik
+    require_message_authenticator = no
+}
+
+client localhost-test {
+    ipaddr   = 127.0.0.1
+    secret   = testing123
+    nas_type = other
+}
