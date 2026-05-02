@@ -86,6 +86,16 @@
                 Paket Layanan
             </a>
 
+            <div class="nav-section">Laporan</div>
+            <a href="{{ route('reports.financial') }}" class="nav-item {{ request()->routeIs('reports.financial*') ? 'active' : '' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l4-4 4 4 5-5"/></svg>
+                Keuangan
+            </a>
+            <a href="{{ route('reports.churn') }}" class="nav-item {{ request()->routeIs('reports.churn') ? 'active' : '' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6m0 0l-3 3m3-3l3 3M15 5v13m0 0l3-3m-3 3l-3-3"/></svg>
+                Churn &amp; Growth
+            </a>
+
             <div class="nav-section">Support</div>
             <a href="{{ route('tickets.index') }}" class="nav-item {{ request()->routeIs('tickets.*') ? 'active' : '' }}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>

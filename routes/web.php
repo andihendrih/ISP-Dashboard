@@ -9,6 +9,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MikrotikController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PppoeController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServicePlanController;
 use App\Http\Controllers\SnmpController;
 use App\Http\Controllers\SupportTicketController;
@@ -54,6 +55,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('payments.store');
         Route::delete('/payments/{payment}',        [PaymentController::class, 'destroy'])->name('payments.destroy');
+
+        /* Laporan */
+        Route::get('/reports/financial',         [ReportController::class, 'financial'])->name('reports.financial');
+        Route::get('/reports/financial/export',  [ReportController::class, 'exportCsv'])->name('reports.financial.export');
+        Route::get('/reports/churn',             [ReportController::class, 'churn'])->name('reports.churn');
 
         /* Tiket Support */
         Route::get('/tickets',                   [SupportTicketController::class, 'index'])->name('tickets.index');
