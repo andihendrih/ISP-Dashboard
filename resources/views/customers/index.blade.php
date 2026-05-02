@@ -50,6 +50,7 @@
                 <th class="text-left px-5 py-3">Paket</th>
                 <th class="text-left px-5 py-3">Status</th>
                 <th class="text-left px-5 py-3">Username</th>
+                <th class="text-left px-5 py-3">Password</th>
                 <th class="text-left px-5 py-3"></th>
             </tr>
         </thead>
@@ -68,10 +69,18 @@
                         <span class="inline-block px-2 py-1 rounded-lg text-xs font-medium {{ $statusBadges[$r->status] ?? 'bg-ink/10' }}">{{ ucfirst($r->status) }}</span>
                     </td>
                     <td class="px-5 py-3 font-mono text-xs">{{ $r->radius_username ?? '—' }}</td>
+                    <td class="px-5 py-3 font-mono text-xs">
+                        @if($r->radius_password)
+                            <span class="pwd-mask" data-pwd="{{ $r->radius_password }}">••••••••</span>
+                            <button type="button" class="pwd-toggle ml-1 text-ink/40 hover:text-ink" title="Tampilkan/sembunyikan">👁</button>
+                        @else
+                            <span class="text-ink/30">—</span>
+                        @endif
+                    </td>
                     <td class="px-5 py-3 text-right"><a href="{{ route('customers.edit', $r->id) }}" class="text-ink/60 text-xs hover:text-ink">Edit →</a></td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="px-5 py-12 text-center text-ink/45">
+                <tr><td colspan="9" class="px-5 py-12 text-center text-ink/45">
                     Belum ada data pelanggan.
                     <a href="{{ route('customers.create') }}" class="text-ink underline ml-1">Tambah pelanggan pertama →</a>
                 </td></tr>
@@ -82,4 +91,20 @@
         <div class="px-5 py-3 border-t border-cream-deep/60">{{ $rows->links() }}</div>
     @endif
 </div>
+
+<script>
+document.querySelectorAll('.pwd-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const span = btn.previousElementSibling;
+        const pwd = span.getAttribute('data-pwd');
+        if (span.textContent === '••••••••') {
+            span.textContent = pwd;
+            span.classList.add('bg-accent/30','px-1','rounded');
+        } else {
+            span.textContent = '••••••••';
+            span.classList.remove('bg-accent/30','px-1','rounded');
+        }
+    });
+});
+</script>
 @endsection
