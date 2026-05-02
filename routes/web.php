@@ -11,6 +11,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PppoeController;
 use App\Http\Controllers\ServicePlanController;
 use App\Http\Controllers\SnmpController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +54,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('payments.store');
         Route::delete('/payments/{payment}',        [PaymentController::class, 'destroy'])->name('payments.destroy');
+
+        /* Tiket Support */
+        Route::get('/tickets',                   [SupportTicketController::class, 'index'])->name('tickets.index');
+        Route::get('/tickets/create',            [SupportTicketController::class, 'create'])->name('tickets.create');
+        Route::post('/tickets',                  [SupportTicketController::class, 'store'])->name('tickets.store');
+        Route::get('/tickets/{ticket}',          [SupportTicketController::class, 'show'])->name('tickets.show');
+        Route::post('/tickets/{ticket}/comment', [SupportTicketController::class, 'comment'])->name('tickets.comment');
+        Route::post('/tickets/{ticket}/status',  [SupportTicketController::class, 'updateStatus'])->name('tickets.status');
+        Route::post('/tickets/{ticket}/assign',  [SupportTicketController::class, 'assign'])->name('tickets.assign');
 
         /* Service Plans (paket harga) */
         Route::get('/plans',              [ServicePlanController::class, 'index'])->name('plans.index');

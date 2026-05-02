@@ -90,6 +90,16 @@
                 Paket Layanan
             </a>
 
+            <div class="nav-section">Support</div>
+            <a href="{{ route('tickets.index') }}" class="nav-item {{ request()->routeIs('tickets.*') ? 'active' : '' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Tiket Support
+                @php($openTickets = \App\Models\SupportTicket::whereIn('status', ['open','in_progress'])->count())
+                @if($openTickets > 0)
+                    <span class="ml-auto text-[10px] bg-accent text-ink rounded-full px-2 py-0.5 font-bold">{{ $openTickets }}</span>
+                @endif
+            </a>
+
             @if(in_array($role, ['admin','noc']))
                 <div class="nav-section">Layanan</div>
                 <a href="{{ route('pppoe.index') }}" class="nav-item {{ request()->routeIs('pppoe.*') ? 'active' : '' }}">
