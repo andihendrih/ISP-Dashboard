@@ -1,48 +1,85 @@
 @extends('layouts.app')
 @section('title','Pelanggan')
+@section('breadcrumb','Pelanggan')
 
 @section('content')
-<h1 class="text-xl font-bold mb-4">Pelanggan</h1>
+@php
+    $statusBadges = [
+        'active'   => 'bg-emerald-100 text-emerald-900',
+        'free'     => 'bg-sky-100 text-sky-900',
+        'pending'  => 'bg-amber-100 text-amber-900',
+        'isolir'   => 'bg-rose-100 text-rose-900',
+        'inactive' => 'bg-ink/10 text-ink/60',
+    ];
+@endphp
+
+<div class="flex items-center justify-between mb-4">
+    <div>
+        <h1 class="text-2xl font-bold">Pelanggan</h1>
+        <p class="text-sm text-ink/55">Daftar pelanggan AHNet.</p>
+    </div>
+    <a href="{{ route('customers.create') }}" class="px-4 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black">+ Tambah Pelanggan</a>
+</div>
+
+@if(session('success'))
+    <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-3 mb-4 text-sm">{{ session('success') }}</div>
+@endif
+
 <form method="GET" class="mb-4 flex gap-2">
-    <input name="q" value="{{ request('q') }}" placeholder="Cari nama / kode / username" class="border-ink/10 rounded-lg text-sm px-3 py-2">
-    <select name="status" class="border-ink/10 rounded-lg text-sm">
-        <option value="">— Status —</option>
+    <input name="q" value="{{ request('q') }}" placeholder="Cari nama / kode / username RADIUS" class="flex-1 max-w-md border border-ink/10 rounded-xl text-sm px-3 py-2 bg-white">
+    <select name="status" class="border border-ink/10 rounded-xl text-sm bg-white px-3">
+        <option value="">— Semua Status —</option>
         @foreach(['active','isolir','free','pending','inactive'] as $s)
             <option value="{{ $s }}" @selected(request('status')===$s)>{{ ucfirst($s) }}</option>
         @endforeach
     </select>
-    <button class="px-3 py-1.5 bg-slate-700 text-white rounded-lg text-sm">Filter</button>
+    <button class="px-4 py-2 bg-ink text-white rounded-xl text-sm">Filter</button>
+    @if(request('q') || request('status'))
+        <a href="{{ route('customers.index') }}" class="px-4 py-2 rounded-xl text-sm text-ink/60 hover:bg-cream-deep/60">Reset</a>
+    @endif
 </form>
 
-<div class="bg-white rounded-xl border border-cream-deep/60 shadow-sm overflow-hidden">
+<div class="bg-white rounded-3xl shadow-card overflow-hidden">
     <table class="min-w-full text-sm">
-        <thead class="bg-cream-card text-ink/65">
+        <thead class="bg-cream-deep/60 text-ink/70">
             <tr>
-                <th class="text-left px-4 py-3">Code</th>
-                <th class="text-left px-4 py-3">Nama</th>
-                <th class="text-left px-4 py-3">Tipe</th>
-                <th class="text-left px-4 py-3">Paket</th>
-                <th class="text-left px-4 py-3">Status</th>
-                <th class="text-left px-4 py-3">Username RADIUS</th>
-                <th class="text-left px-4 py-3"></th>
+                <th class="text-left px-5 py-3">Code</th>
+                <th class="text-left px-5 py-3">Nama</th>
+                <th class="text-left px-5 py-3">Kontak</th>
+                <th class="text-left px-5 py-3">Tipe</th>
+                <th class="text-left px-5 py-3">Paket</th>
+                <th class="text-left px-5 py-3">Status</th>
+                <th class="text-left px-5 py-3">Username RADIUS</th>
+                <th class="text-left px-5 py-3"></th>
             </tr>
         </thead>
         <tbody>
             @forelse($rows as $r)
-                <tr class="border-t border-cream-deep/60">
-                    <td class="px-4 py-2 font-mono">{{ $r->customer_code }}</td>
-                    <td class="px-4 py-2">{{ $r->full_name }}</td>
-                    <td class="px-4 py-2 uppercase text-xs">{{ $r->service_type }}</td>
-                    <td class="px-4 py-2">{{ $r->package ?? '—' }}</td>
-                    <td class="px-4 py-2">{{ $r->status }}</td>
-                    <td class="px-4 py-2 font-mono">{{ $r->radius_username ?? '—' }}</td>
-                    <td class="px-4 py-2"><a href="{{ route('customers.edit', $r->id) }}" class="text-blue-600 text-xs hover:underline">Edit</a></td>
+                <tr class="border-t border-cream-deep/60 hover:bg-cream-card/40">
+                    <td class="px-5 py-3 font-mono text-xs">{{ $r->customer_code }}</td>
+                    <td class="px-5 py-3 font-semibold">{{ $r->full_name }}</td>
+                    <td class="px-5 py-3 text-xs">
+                        <div>{{ $r->phone ?? '—' }}</div>
+                        <div class="text-ink/50">{{ $r->email ?? '' }}</div>
+                    </td>
+                    <td class="px-5 py-3 uppercase text-xs">{{ $r->service_type }}</td>
+                    <td class="px-5 py-3 text-xs">{{ $r->package ?? '—' }}</td>
+                    <td class="px-5 py-3">
+                        <span class="inline-block px-2 py-1 rounded-lg text-xs font-medium {{ $statusBadges[$r->status] ?? 'bg-ink/10' }}">{{ ucfirst($r->status) }}</span>
+                    </td>
+                    <td class="px-5 py-3 font-mono text-xs">{{ $r->radius_username ?? '—' }}</td>
+                    <td class="px-5 py-3 text-right"><a href="{{ route('customers.edit', $r->id) }}" class="text-ink/60 text-xs hover:text-ink">Edit →</a></td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="px-4 py-8 text-center text-ink/45">Belum ada data pelanggan.</td></tr>
+                <tr><td colspan="8" class="px-5 py-12 text-center text-ink/45">
+                    Belum ada data pelanggan.
+                    <a href="{{ route('customers.create') }}" class="text-ink underline ml-1">Tambah pelanggan pertama →</a>
+                </td></tr>
             @endforelse
         </tbody>
     </table>
-    <div class="px-4 py-3 border-t border-cream-deep/60">{{ $rows->links() }}</div>
+    @if($rows->hasPages())
+        <div class="px-5 py-3 border-t border-cream-deep/60">{{ $rows->links() }}</div>
+    @endif
 </div>
 @endsection
