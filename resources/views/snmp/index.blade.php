@@ -5,7 +5,7 @@
 <h1 class="text-xl font-bold mb-4">SNMP Monitor</h1>
 
 <form method="GET" class="mb-4 flex gap-2">
-    <select name="device_id" class="border-slate-300 rounded-lg text-sm">
+    <select name="device_id" class="border-ink/10 rounded-lg text-sm">
         @foreach($devices as $d)
             <option value="{{ $d->id }}" @selected($device && $device->id === $d->id)>{{ $d->name }} ({{ $d->host }})</option>
         @endforeach
@@ -14,16 +14,16 @@
     @if($device)
         <form method="POST" action="{{ route('snmp.poll', $device->id) }}" class="inline">
             @csrf
-            <button class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm">Poll Sekarang</button>
+            <button class="px-3 py-1.5 bg-ink text-white rounded-lg text-sm">Poll Sekarang</button>
         </form>
     @endif
 </form>
 
 @if($device)
-    <div class="bg-white rounded-xl border border-slate-100 mb-4">
-        <div class="px-5 py-3 font-semibold border-b border-slate-100">Interface Stats — {{ $device->name }}</div>
+    <div class="bg-white rounded-xl border border-cream-deep/60 mb-4">
+        <div class="px-5 py-3 font-semibold border-b border-cream-deep/60">Interface Stats — {{ $device->name }}</div>
         <table class="min-w-full text-sm">
-            <thead class="bg-slate-50 text-slate-600"><tr>
+            <thead class="bg-cream-card text-ink/65"><tr>
                 <th class="text-left px-4 py-2">ifIndex</th>
                 <th class="text-left px-4 py-2">Name</th>
                 <th class="text-right px-4 py-2">In bps</th>
@@ -34,22 +34,22 @@
             </tr></thead>
             <tbody>
                 @forelse($latest as $l)
-                    <tr class="border-t border-slate-100">
+                    <tr class="border-t border-cream-deep/60">
                         <td class="px-4 py-2 font-mono">{{ $l->if_index }}</td>
                         <td class="px-4 py-2 font-mono">{{ $l->if_name }}</td>
                         <td class="px-4 py-2 text-right">{{ number_format($l->in_bps) }}</td>
                         <td class="px-4 py-2 text-right">{{ number_format($l->out_bps) }}</td>
                         <td class="px-4 py-2">{{ $l->oper_status ? '🟢 up' : '🔴 down' }}</td>
-                        <td class="px-4 py-2 text-xs text-slate-500">{{ $l->polled_at->diffForHumans() }}</td>
+                        <td class="px-4 py-2 text-xs text-ink/55">{{ $l->polled_at->diffForHumans() }}</td>
                         <td class="px-4 py-2"><button onclick="loadHistory({{ $l->if_index }}, '{{ $l->if_name }}')" class="text-blue-600 text-xs hover:underline">History</button></td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Belum ada data SNMP. Klik "Poll Sekarang".</td></tr>
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-ink/45">Belum ada data SNMP. Klik "Poll Sekarang".</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-    <div id="chartCard" class="bg-white rounded-xl border border-slate-100 p-5 hidden">
+    <div id="chartCard" class="bg-white rounded-xl border border-cream-deep/60 p-5 hidden">
         <div class="font-semibold mb-3" id="chartTitle">History</div>
         <canvas id="chartHist" height="80"></canvas>
     </div>
