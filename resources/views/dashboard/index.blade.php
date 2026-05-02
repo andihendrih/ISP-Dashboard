@@ -99,6 +99,29 @@
         </div>
     </div>
 
+    @if($billing)
+        {{-- Billing summary --}}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white rounded-3xl p-5 shadow-card">
+                <div class="text-xs text-ink/55 uppercase font-semibold">Total Outstanding</div>
+                <div class="text-2xl font-bold mt-1">Rp {{ number_format($billing['outstanding'], 0, ',', '.') }}</div>
+                <a href="{{ route('invoices.index') }}" class="text-xs text-ink/55 hover:text-ink mt-2 inline-block">Lihat tagihan →</a>
+            </div>
+            <div class="bg-white rounded-3xl p-5 shadow-card">
+                <div class="text-xs text-ink/55 uppercase font-semibold">Belum Lunas</div>
+                <div class="text-2xl font-bold mt-1">{{ $billing['belum_lunas_count'] }}</div>
+            </div>
+            <div class="bg-ink text-white rounded-3xl p-5 shadow-card">
+                <div class="text-xs text-white/60 uppercase font-semibold">Terlambat</div>
+                <div class="text-2xl font-bold mt-1 text-accent">{{ $billing['terlambat_count'] }}</div>
+            </div>
+            <div class="bg-white rounded-3xl p-5 shadow-card">
+                <div class="text-xs text-ink/55 uppercase font-semibold">Lunas Bulan Ini</div>
+                <div class="text-xl font-bold mt-1">Rp {{ number_format($billing['lunas_bulan_ini'], 0, ',', '.') }}</div>
+            </div>
+        </div>
+    @endif
+
     {{-- Health + recent customers --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="bg-ink rounded-3xl p-6 text-white shadow-card relative overflow-hidden">
