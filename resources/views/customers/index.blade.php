@@ -26,7 +26,7 @@
 @endif
 
 <form method="GET" class="mb-4 flex gap-2">
-    <input name="q" value="{{ request('q') }}" placeholder="Cari nama / kode / username RADIUS" class="flex-1 max-w-md border border-ink/10 rounded-xl text-sm px-3 py-2 bg-white">
+    <input name="q" value="{{ request('q') }}" placeholder="Cari nama / kode / username" class="flex-1 max-w-md border border-ink/10 rounded-xl text-sm px-3 py-2 bg-white">
     <select name="status" class="border border-ink/10 rounded-xl text-sm bg-white px-3">
         <option value="">— Semua Status —</option>
         @foreach(['active','isolir','free','pending','inactive'] as $s)
@@ -49,7 +49,7 @@
                 <th class="text-left px-5 py-3">Tipe</th>
                 <th class="text-left px-5 py-3">Paket</th>
                 <th class="text-left px-5 py-3">Status</th>
-                <th class="text-left px-5 py-3">Username RADIUS</th>
+                <th class="text-left px-5 py-3">Username</th>
                 <th class="text-left px-5 py-3"></th>
             </tr>
         </thead>

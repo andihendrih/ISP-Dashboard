@@ -84,19 +84,36 @@
                 </select>
             </div>
             <div>
-                <label class="text-sm font-medium">Username RADIUS</label>
-                <input name="radius_username" value="{{ old('radius_username') }}" placeholder="ahnet_username" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
-                <p class="text-xs text-ink/45 mt-1">Kosongkan dulu kalau user RADIUS belum dibuat. Bikin lewat menu <a href="{{ route('pppoe.create') }}" class="underline">PPPoE → Buat Baru</a>.</p>
+                <label class="text-sm font-medium">Username</label>
+                <input name="radius_username" value="{{ old('radius_username') }}" placeholder="kosongkan = auto-generate" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+                <p class="text-xs text-ink/45 mt-1">Otomatis dibuat dari nama (mis. <span class="font-mono">ahnet_budisantoso&amp;42</span>). Bisa diisi manual.</p>
             </div>
             <div>
-                <label class="text-sm font-medium">Mikrotik Device</label>
+                <label class="text-sm font-medium">Password</label>
+                <div class="flex gap-2 mt-1">
+                    <input name="radius_password" id="rpw" value="{{ old('radius_password') }}" placeholder="kosongkan = auto-generate" class="flex-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+                    <button type="button" onclick="genPwd()" class="px-3 py-2 bg-cream-deep/70 hover:bg-cream-deep rounded-lg text-sm">🎲</button>
+                </div>
+                <p class="text-xs text-ink/45 mt-1">Random 10 karakter. Klik 🎲 untuk regenerate.</p>
+            </div>
+            <div class="col-span-2">
+                <label class="inline-flex items-center gap-2 mt-1 bg-accent-soft/50 border border-accent/40 px-3 py-2 rounded-lg w-full">
+                    <input type="hidden" name="auto_radius" value="0">
+                    <input type="checkbox" name="auto_radius" value="1" @checked(old('auto_radius', '1')) class="rounded border-ink/20">
+                    <span class="text-sm"><strong>Auto provision ke FreeRADIUS</strong> — username, password, group &amp; rate-limit langsung ditulis ke <span class="font-mono">radcheck</span>/<span class="font-mono">radusergroup</span>/<span class="font-mono">radreply</span> waktu disimpan. (Tidak push ke Mikrotik)</span>
+                </label>
+            </div>
+            <div>
+                <label class="text-sm font-medium">Mikrotik Device <span class="text-ink/40 font-normal">(opsional)</span></label>
                 <select name="mikrotik_device_id" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
                     <option value="">— Tidak di-set —</option>
                     @foreach($devices as $d)
                         <option value="{{ $d->id }}" @selected((int) old('mikrotik_device_id') === $d->id)>{{ $d->name }}</option>
                     @endforeach
                 </select>
+                <p class="text-xs text-ink/45 mt-1">Cuma referensi; user TIDAK di-push ke Mikrotik dari form ini.</p>
             </div>
+            <div></div>
             <div>
                 <label class="text-sm font-medium">Paket / Group RADIUS</label>
                 <input name="package" value="{{ old('package') }}" placeholder="pppoe-default" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
@@ -167,5 +184,13 @@ document.querySelector('select[name="service_plan_id"]').addEventListener('chang
     if (rate && !rateInput.value) rateInput.value = rate;
     if (group && !packageInput.value) packageInput.value = group;
 });
+
+// Generate random password (10 chars, letters + digits + safe symbols)
+function genPwd() {
+    const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%';
+    let p = '';
+    for (let i = 0; i < 10; i++) p += chars.charAt(Math.floor(Math.random() * chars.length));
+    document.getElementById('rpw').value = p;
+}
 </script>
 @endsection

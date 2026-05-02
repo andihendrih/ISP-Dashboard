@@ -8,6 +8,7 @@ use App\Models\ServicePlan;
 use App\Services\RadiusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class CustomerController extends Controller
@@ -59,11 +60,16 @@ class CustomerController extends Controller
             'status'            => ['required', 'in:active,isolir,free,pending,inactive'],
             'service_type'      => ['required', 'in:pppoe,hotspot'],
             'radius_username'   => ['nullable', 'string', 'max:120'],
+            'radius_password'   => ['nullable', 'string', 'max:120'],
+            'auto_radius'       => ['sometimes', 'boolean'],
             'mikrotik_device_id'=> ['nullable', 'integer', 'exists:devices_mikrotik,id'],
             'joined_at'         => ['nullable', 'date'],
             'expired_at'        => ['nullable', 'date'],
             'notes'             => ['nullable', 'string', 'max:2000'],
         ]);
+
+        $autoRadius = (bool) ($data['auto_radius'] ?? true);
+        unset($data['auto_radius']);
 
         $data['customer_code']   = ($data['customer_code'] ?? '') !== '' ? $data['customer_code'] : $this->nextCustomerCode();
         $data['billing_enabled'] = (bool) ($data['billing_enabled'] ?? false);
@@ -80,11 +86,40 @@ class CustomerController extends Controller
             }
         }
 
+        // Auto-generate username + password kalau auto_radius dicentang
+        $radiusFlash = null;
+        if ($autoRadius && $data['service_type'] === 'pppoe') {
+            if (empty($data['radius_username'])) {
+                $data['radius_username'] = $this->radius->generatePppoeUsername($data['full_name']);
+            }
+            if (empty($data['radius_password'])) {
+                $data['radius_password'] = $this->radius->generatePppoePassword();
+            }
+
+            try {
+                $this->radius->createPppoeUser(
+                    $data['radius_username'],
+                    $data['radius_password'],
+                    $data['package'] ?? null,
+                    $data['rate_limit'] ?? null
+                );
+                $radiusFlash = "Username: {$data['radius_username']} | Password: {$data['radius_password']}";
+            } catch (\Throwable $e) {
+                Log::warning('RADIUS provisioning failed for new customer: '.$e->getMessage());
+                $radiusFlash = "RADIUS provisioning gagal: {$e->getMessage()} (data pelanggan tetap tersimpan, lo bisa retry dari halaman edit).";
+            }
+        }
+
         $row = CustomerProfile::create($data);
+
+        $msg = "Pelanggan {$row->customer_code} — {$row->full_name} berhasil ditambahkan.";
+        if ($radiusFlash) {
+            $msg .= " {$radiusFlash}";
+        }
 
         return redirect()
             ->route('customers.index')
-            ->with('success', "Pelanggan {$row->customer_code} — {$row->full_name} berhasil ditambahkan.");
+            ->with('success', $msg);
     }
 
     /**
@@ -134,20 +169,44 @@ class CustomerController extends Controller
             'rate_limit'        => ['nullable', 'string', 'max:64'],
             'status'            => ['required', 'in:active,isolir,free,pending,inactive'],
             'service_type'      => ['required', 'in:pppoe,hotspot'],
+            'radius_username'   => ['nullable', 'string', 'max:120'],
+            'radius_password'   => ['nullable', 'string', 'max:120'],
             'mikrotik_device_id'=> ['nullable', 'integer', 'exists:devices_mikrotik,id'],
             'expired_at'        => ['nullable', 'date'],
         ]);
         $data['billing_enabled'] = (bool) ($data['billing_enabled'] ?? false);
+
+        $oldUsername = $row->radius_username;
+        $oldPassword = $row->radius_password;
         $row->update($data);
 
-        // Mirror radius rate limit if username known
+        // Provision / sync ke RADIUS
         if ($row->radius_username) {
             try {
-                $this->radius->setRateLimit($row->radius_username, $data['rate_limit'] ?? null);
-                if (!empty($data['package'])) {
-                    $this->radius->setGroup($row->radius_username, $data['package']);
+                // Kalau user belum ada di radcheck → create; kalau sudah → update password & rate
+                $exists = \App\Models\Radius\Radcheck::where('username', $row->radius_username)
+                    ->where('attribute', 'Cleartext-Password')
+                    ->exists();
+
+                if (!$exists) {
+                    $this->radius->createPppoeUser(
+                        $row->radius_username,
+                        $row->radius_password ?: $this->radius->generatePppoePassword(),
+                        $row->package ?: null,
+                        $row->rate_limit ?: null
+                    );
+                } else {
+                    if ($row->radius_password && $row->radius_password !== $oldPassword) {
+                        $this->radius->setPassword($row->radius_username, $row->radius_password);
+                    }
+                    $this->radius->setRateLimit($row->radius_username, $row->rate_limit ?: null);
+                    if (!empty($row->package)) {
+                        $this->radius->setGroup($row->radius_username, $row->package);
+                    }
                 }
-            } catch (\Throwable) { /* radius may be unreachable */ }
+            } catch (\Throwable $e) {
+                Log::warning('RADIUS sync on customer update failed: '.$e->getMessage());
+            }
         }
 
         return redirect()->route('customers.index')->with('success', 'Pelanggan diperbarui.');

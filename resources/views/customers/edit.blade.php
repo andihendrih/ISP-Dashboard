@@ -43,7 +43,15 @@
             <input name="rate_limit" value="{{ old('rate_limit', $row->rate_limit) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
         </div>
         <div>
-            <label class="text-sm font-medium">Mikrotik Device</label>
+            <label class="text-sm font-medium">Username</label>
+            <input name="radius_username" value="{{ old('radius_username', $row->radius_username) }}" placeholder="ahnet_username" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+        </div>
+        <div>
+            <label class="text-sm font-medium">Password</label>
+            <input name="radius_password" value="{{ old('radius_password', $row->radius_password) }}" placeholder="auto-generate kalau kosong" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+        </div>
+        <div>
+            <label class="text-sm font-medium">Mikrotik Device <span class="text-ink/40 font-normal">(opsional)</span></label>
             <select name="mikrotik_device_id" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
                 <option value="">—</option>
                 @foreach($devices as $d)
@@ -51,6 +59,7 @@
                 @endforeach
             </select>
         </div>
+        <div></div>
         <div class="col-span-2">
             <label class="text-sm font-medium">Alamat</label>
             <textarea name="address" rows="2" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">{{ old('address', $row->address) }}</textarea>

@@ -16,7 +16,7 @@ class CustomerProfile extends Model
     protected $fillable = [
         'customer_code', 'full_name', 'email', 'phone', 'id_card_number',
         'address', 'latitude', 'longitude', 'package', 'service_plan_id', 'billing_enabled',
-        'rate_limit', 'status', 'service_type', 'radius_username', 'mikrotik_device_id',
+        'rate_limit', 'status', 'service_type', 'radius_username', 'radius_password', 'mikrotik_device_id',
         'joined_at', 'expired_at', 'notes',
     ];
 
