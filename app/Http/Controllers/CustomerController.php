@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerProfile;
 use App\Models\DeviceMikrotik;
+use App\Models\ServicePlan;
 use App\Services\RadiusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +38,7 @@ class CustomerController extends Controller
         return view('customers.edit', [
             'row'     => $row,
             'devices' => DeviceMikrotik::where('is_active', true)->get(),
+            'plans'   => ServicePlan::where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -49,12 +51,15 @@ class CustomerController extends Controller
             'email'             => ['nullable', 'email', 'max:120'],
             'address'           => ['nullable', 'string', 'max:1000'],
             'package'           => ['nullable', 'string', 'max:64'],
+            'service_plan_id'   => ['nullable', 'integer', 'exists:service_plans,id'],
+            'billing_enabled'   => ['sometimes', 'boolean'],
             'rate_limit'        => ['nullable', 'string', 'max:64'],
             'status'            => ['required', 'in:active,isolir,free,pending,inactive'],
             'service_type'      => ['required', 'in:pppoe,hotspot'],
             'mikrotik_device_id'=> ['nullable', 'integer', 'exists:devices_mikrotik,id'],
             'expired_at'        => ['nullable', 'date'],
         ]);
+        $data['billing_enabled'] = (bool) ($data['billing_enabled'] ?? false);
         $row->update($data);
 
         // Mirror radius rate limit if username known
