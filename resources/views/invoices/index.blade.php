@@ -92,7 +92,8 @@
                     @php([$lbl, $cls] = $statusBadges[$inv->status] ?? [$inv->status, 'bg-ink/10'])
                     <span class="inline-block px-2 py-1 rounded-lg text-xs font-medium {{ $cls }}">{{ $lbl }}</span>
                 </td>
-                <td class="px-5 py-3 text-right">
+                <td class="px-5 py-3 text-right whitespace-nowrap">
+                    <a href="{{ route('invoices.pdf', $inv) }}" target="_blank" class="text-ink/55 hover:text-ink mr-2" title="Cetak PDF">📄</a>
                     <a href="{{ route('invoices.show', $inv) }}" class="text-ink/60 hover:text-ink">Detail →</a>
                 </td>
             </tr>
