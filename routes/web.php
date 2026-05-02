@@ -7,6 +7,7 @@ use App\Http\Controllers\GenieacsController;
 use App\Http\Controllers\HotspotController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MikrotikController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PppoeController;
 use App\Http\Controllers\ReportController;
@@ -69,6 +70,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/tickets/{ticket}/comment', [SupportTicketController::class, 'comment'])->name('tickets.comment');
         Route::post('/tickets/{ticket}/status',  [SupportTicketController::class, 'updateStatus'])->name('tickets.status');
         Route::post('/tickets/{ticket}/assign',  [SupportTicketController::class, 'assign'])->name('tickets.assign');
+
+        /* Notifikasi */
+        Route::get('/notifications/settings',     [NotificationController::class, 'settings'])->name('notifications.settings');
+        Route::post('/notifications/settings',    [NotificationController::class, 'saveSettings'])->name('notifications.settings.save');
+        Route::post('/notifications/test',        [NotificationController::class, 'testSend'])->name('notifications.test');
+        Route::get('/notifications/logs',         [NotificationController::class, 'logs'])->name('notifications.logs');
+        Route::post('/invoices/{invoice}/notify', [NotificationController::class, 'sendInvoiceNotification'])->name('notifications.invoice');
 
         /* Service Plans (paket harga) */
         Route::get('/plans',              [ServicePlanController::class, 'index'])->name('plans.index');

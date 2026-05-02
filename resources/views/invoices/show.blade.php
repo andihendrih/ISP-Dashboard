@@ -22,6 +22,7 @@
     </div>
     <div class="flex gap-2">
         <a href="{{ route('invoices.index') }}" class="px-4 py-2 bg-white border border-ink/10 rounded-xl">← Kembali</a>
+        <button type="button" onclick="document.getElementById('notifyForm').classList.toggle('hidden')" class="px-4 py-2 bg-accent text-ink rounded-xl font-semibold">📲 Kirim Notifikasi</button>
         @if(in_array($invoice->status, ['belum_lunas','terlambat']))
             <form method="POST" action="{{ route('invoices.cancel', $invoice) }}" class="inline" onsubmit="return confirm('Batalkan invoice ini?')">
                 @csrf
@@ -31,6 +32,32 @@
         @endif
     </div>
 </div>
+
+<form id="notifyForm" method="POST" action="{{ route('notifications.invoice', $invoice) }}" class="hidden bg-white border border-cream-deep/60 rounded-2xl p-4 mb-4">
+    @csrf
+    <div class="grid grid-cols-3 gap-3 items-end">
+        <div>
+            <label class="text-xs text-ink/55">Template</label>
+            <select name="template" class="block w-full border border-ink/10 rounded-lg px-3 py-2 text-sm mt-1">
+                <option value="invoice_created">Invoice baru terbit</option>
+                <option value="reminder_h3">Reminder H-3 jatuh tempo</option>
+                <option value="reminder_h0">Reminder hari-H jatuh tempo</option>
+                <option value="reminder_overdue">Reminder overdue (sudah lewat)</option>
+                <option value="payment_received">Pembayaran diterima</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-xs text-ink/55">Channel</label>
+            <div class="flex gap-3 mt-1.5 text-sm">
+                <label class="flex items-center gap-2"><input type="checkbox" name="channels[]" value="wa" checked> WhatsApp</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="channels[]" value="email" checked> Email</label>
+            </div>
+        </div>
+        <button class="px-4 py-2 bg-ink text-cream rounded-xl text-sm font-semibold">Kirim Sekarang</button>
+    </div>
+    @if(session('success')) <div class="mt-2 text-xs text-emerald-700">{{ session('success') }}</div> @endif
+    @if(session('error'))   <div class="mt-2 text-xs text-red-700">{{ session('error') }}</div> @endif
+</form>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     {{-- Left: details --}}

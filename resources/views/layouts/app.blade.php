@@ -105,6 +105,10 @@
                     <span class="ml-auto text-[10px] bg-accent text-ink rounded-full px-2 py-0.5 font-bold">{{ $openTickets }}</span>
                 @endif
             </a>
+            <a href="{{ route('notifications.settings') }}" class="nav-item {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14V11a6 6 0 10-12 0v3a2 2 0 01-.6 1.6L4 17h5m6 0a3 3 0 11-6 0"/></svg>
+                Notifikasi
+            </a>
 
             @if(in_array($role, ['admin','noc']))
                 <div class="nav-section">Layanan</div>
