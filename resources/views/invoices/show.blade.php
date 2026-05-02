@@ -20,8 +20,11 @@
         <span class="inline-block mt-1 px-2 py-1 rounded-lg text-xs font-medium {{ $cls }}">{{ $lbl }}</span>
         @if($invoice->is_prorated)<span class="ml-1 text-[10px] uppercase bg-accent-soft text-ink px-2 py-1 rounded">PRORATE</span>@endif
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
         <a href="{{ route('invoices.index') }}" class="px-4 py-2 bg-white border border-ink/10 rounded-xl">← Kembali</a>
+        <a href="{{ route('invoices.pdf', $invoice) }}" target="_blank" class="px-4 py-2 bg-white border border-ink/10 rounded-xl hover:bg-cream-deep/60">📄 Cetak Invoice</a>
+        <a href="{{ route('invoices.pdf', $invoice) }}?download=1" class="px-4 py-2 bg-white border border-ink/10 rounded-xl hover:bg-cream-deep/60">⬇ Download Invoice</a>
+        <a href="{{ route('invoices.receipt', $invoice) }}" target="_blank" class="px-4 py-2 bg-accent text-ink rounded-xl hover:brightness-95 font-semibold">🧾 Cetak Struk</a>
         @if(in_array($invoice->status, ['belum_lunas','terlambat']))
             <form method="POST" action="{{ route('invoices.cancel', $invoice) }}" class="inline" onsubmit="return confirm('Batalkan invoice ini?')">
                 @csrf

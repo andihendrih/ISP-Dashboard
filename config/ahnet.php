@@ -12,6 +12,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Outlet / Office (untuk header struk)
+    |--------------------------------------------------------------------------
+    */
+    'outlet' => [
+        'name'    => env('AHNET_OUTLET_NAME', 'AHNET MULTIPAYMENT'),
+        'tagline' => env('AHNET_OUTLET_TAGLINE', 'INTERNET SERVICE PROVIDER'),
+        'address' => env('AHNET_OUTLET_ADDRESS', 'Alamat Outlet AHNet'),
+        'phone'   => env('AHNET_OUTLET_PHONE', '081234567890'),
+        'cs'      => env('AHNET_CS_PHONE', '0812-3456-7890'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | RADIUS / PPPoE / Hotspot defaults
     |--------------------------------------------------------------------------
     */

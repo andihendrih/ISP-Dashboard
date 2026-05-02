@@ -6,14 +6,36 @@ use App\Models\CustomerProfile;
 use App\Models\Invoice;
 use App\Models\ServicePlan;
 use App\Services\BillingService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class InvoiceController extends Controller
 {
     public function __construct(private BillingService $billing) {}
+
+    public function pdf(Request $request, Invoice $invoice): Response
+    {
+        $invoice->load(['customer.servicePlan', 'servicePlan', 'payments']);
+        $pdf = Pdf::loadView('invoices.pdf.invoice', compact('invoice'))
+            ->setPaper('a4');
+
+        $action = $request->query('download') ? 'download' : 'stream';
+        return $pdf->{$action}("Invoice-{$invoice->invoice_number}.pdf");
+    }
+
+    public function receipt(Request $request, Invoice $invoice): Response
+    {
+        $invoice->load(['customer', 'servicePlan', 'payments.recorder']);
+        $pdf = Pdf::loadView('invoices.pdf.receipt', compact('invoice'))
+            ->setPaper([0, 0, 226.77, 600], 'portrait'); // 80mm thermal width
+
+        $action = $request->query('download') ? 'download' : 'stream';
+        return $pdf->{$action}("Struk-{$invoice->invoice_number}.pdf");
+    }
 
     public function index(Request $request): View
     {

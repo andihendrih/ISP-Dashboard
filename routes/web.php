@@ -47,8 +47,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/invoices/create',          [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/invoices',                [InvoiceController::class, 'store'])->name('invoices.store');
         Route::post('/invoices/generate-batch', [InvoiceController::class, 'generateBatch'])->name('invoices.generate-batch');
-        Route::get('/invoices/{invoice}',       [InvoiceController::class, 'show'])->name('invoices.show');
-        Route::post('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+        Route::get('/invoices/{invoice}',           [InvoiceController::class, 'show'])->name('invoices.show');
+        Route::get('/invoices/{invoice}/pdf',       [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+        Route::get('/invoices/{invoice}/receipt',   [InvoiceController::class, 'receipt'])->name('invoices.receipt');
+        Route::post('/invoices/{invoice}/cancel',   [InvoiceController::class, 'cancel'])->name('invoices.cancel');
 
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('payments.store');
