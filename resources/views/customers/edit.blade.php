@@ -43,7 +43,15 @@
             <input name="rate_limit" value="{{ old('rate_limit', $row->rate_limit) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
         </div>
         <div>
-            <label class="text-sm font-medium">Mikrotik Device</label>
+            <label class="text-sm font-medium">Username</label>
+            <input name="radius_username" value="{{ old('radius_username', $row->radius_username) }}" placeholder="ahnet_username" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+        </div>
+        <div>
+            <label class="text-sm font-medium">Password</label>
+            <input name="radius_password" value="{{ old('radius_password', $row->radius_password) }}" placeholder="auto-generate kalau kosong" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+        </div>
+        <div>
+            <label class="text-sm font-medium">Mikrotik Device <span class="text-ink/40 font-normal">(opsional)</span></label>
             <select name="mikrotik_device_id" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
                 <option value="">—</option>
                 @foreach($devices as $d)
@@ -51,6 +59,7 @@
                 @endforeach
             </select>
         </div>
+        <div></div>
         <div class="col-span-2">
             <label class="text-sm font-medium">Alamat</label>
             <textarea name="address" rows="2" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">{{ old('address', $row->address) }}</textarea>
@@ -58,6 +67,32 @@
         <div>
             <label class="text-sm font-medium">Berlaku Sampai</label>
             <input name="expired_at" type="date" value="{{ old('expired_at', optional($row->expired_at)->toDateString()) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
+        </div>
+
+        <div class="col-span-2 border-t border-cream-deep/60 pt-4 mt-2">
+            <h3 class="text-sm font-bold text-ink/70 mb-2">Billing</h3>
+        </div>
+        <div>
+            <label class="text-sm font-medium">Paket Layanan (Harga)</label>
+            <select name="service_plan_id" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
+                <option value="">— Belum di-set —</option>
+                @foreach($plans as $p)
+                    <option value="{{ $p->id }}" @selected((int) old('service_plan_id', $row->service_plan_id) === $p->id)>
+                        {{ $p->name }} — Rp {{ number_format($p->price, 0, ',', '.') }} / bulan
+                    </option>
+                @endforeach
+            </select>
+            <p class="text-xs text-ink/45 mt-1">Pelanggan tanpa paket tidak akan ikut auto-generate invoice.</p>
+        </div>
+        <div>
+            <label class="text-sm font-medium">Aktifkan Auto Invoice?</label>
+            <div class="mt-3">
+                <label class="inline-flex items-center gap-2">
+                    <input type="hidden" name="billing_enabled" value="0">
+                    <input type="checkbox" name="billing_enabled" value="1" @checked(old('billing_enabled', $row->billing_enabled)) class="rounded border-ink/20">
+                    <span class="text-sm">Generate invoice otomatis tiap bulan</span>
+                </label>
+            </div>
         </div>
     </div>
     <button class="px-4 py-2 bg-ink text-white rounded-lg">Update</button>

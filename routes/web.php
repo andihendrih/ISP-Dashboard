@@ -5,8 +5,11 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GenieacsController;
 use App\Http\Controllers\HotspotController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MikrotikController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PppoeController;
+use App\Http\Controllers\ServicePlanController;
 use App\Http\Controllers\SnmpController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +32,8 @@ Route::middleware('auth')->group(function () {
     /* Pelanggan */
     Route::middleware('role:admin,noc,finance')->group(function () {
         Route::get('/customers',           [CustomerController::class, 'index'])->name('customers.index');
+        Route::get('/customers/create',    [CustomerController::class, 'create'])->name('customers.create');
+        Route::post('/customers',          [CustomerController::class, 'store'])->name('customers.store');
         Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('/customers/{id}',      [CustomerController::class, 'update'])->name('customers.update');
 
@@ -36,6 +41,26 @@ Route::middleware('auth')->group(function () {
         Route::get('/users-radius/{username}', [UserManagementController::class, 'show'])
             ->where('username', '.*')
             ->name('users.show');
+
+        /* Billing — Invoices & Payments (admin + finance) */
+        Route::get('/invoices',                 [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/create',          [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('/invoices',                [InvoiceController::class, 'store'])->name('invoices.store');
+        Route::post('/invoices/generate-batch', [InvoiceController::class, 'generateBatch'])->name('invoices.generate-batch');
+        Route::get('/invoices/{invoice}',       [InvoiceController::class, 'show'])->name('invoices.show');
+        Route::post('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+
+        Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('payments.store');
+        Route::delete('/payments/{payment}',        [PaymentController::class, 'destroy'])->name('payments.destroy');
+
+        /* Service Plans (paket harga) */
+        Route::get('/plans',              [ServicePlanController::class, 'index'])->name('plans.index');
+        Route::get('/plans/create',       [ServicePlanController::class, 'create'])->name('plans.create');
+        Route::post('/plans',             [ServicePlanController::class, 'store'])->name('plans.store');
+        Route::get('/plans/{plan}/edit',  [ServicePlanController::class, 'edit'])->name('plans.edit');
+        Route::put('/plans/{plan}',       [ServicePlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}',    [ServicePlanController::class, 'destroy'])->name('plans.destroy');
     });
 
     /* PPPoE */
