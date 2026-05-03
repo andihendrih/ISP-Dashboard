@@ -3,7 +3,7 @@
 @section('breadcrumb','Billing / Paket / Edit')
 
 @section('content')
-<h1 class="text-2xl font-bold mb-4">Edit Paket: {{ $plan->name }}</h1>
+<h1 class="text-xl sm:text-2xl font-bold mb-4">Edit Paket: {{ $plan->name }}</h1>
 
 <form method="POST" action="{{ route('plans.update', $plan) }}" class="bg-white rounded-3xl shadow-card p-6 max-w-2xl space-y-4">
     @csrf @method('PUT')

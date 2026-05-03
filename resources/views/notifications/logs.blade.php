@@ -4,7 +4,7 @@
 @section('content')
 <div class="flex items-start justify-between gap-3 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Log Notifikasi</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Log Notifikasi</h1>
         <p class="text-sm text-ink/55">Audit trail semua notifikasi WA &amp; Email yang dikirim.</p>
     </div>
     <a href="{{ route('notifications.settings') }}" class="px-4 py-2 bg-cream-deep/60 text-ink rounded-xl text-sm font-semibold hover:bg-cream-deep">⚙ Pengaturan</a>
@@ -32,8 +32,8 @@
     <a href="{{ route('notifications.logs') }}" class="px-3 py-2 text-sm text-ink/55 hover:bg-cream-deep/60 rounded-xl">Reset</a>
 </form>
 
-<div class="bg-white border border-cream-deep/60 rounded-2xl overflow-hidden">
-    <table class="w-full text-sm">
+<div class="bg-white border border-cream-deep/60 rounded-2xl overflow-x-auto">
+    <table class="min-w-full text-sm">
         <thead class="text-ink/55 text-xs uppercase tracking-wide bg-cream-deep/30">
             <tr>
                 <th class="text-left px-5 py-3">Waktu</th>

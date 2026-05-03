@@ -2,9 +2,9 @@
 @section('title','Tiket Support')
 
 @section('content')
-<div class="flex items-center justify-between mb-1">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
     <div>
-        <h1 class="text-2xl font-bold">Tiket Support</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Tiket Support</h1>
         <p class="text-sm text-ink/55">Komplain & permintaan pelanggan AHNet.</p>
     </div>
     <a href="{{ route('tickets.create') }}" class="px-5 py-2.5 bg-ink text-cream rounded-xl font-semibold hover:brightness-95">+ Tiket Baru</a>
@@ -15,7 +15,7 @@
 @endif
 
 {{-- Stat tiles --}}
-<div class="grid grid-cols-4 gap-3 my-4">
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 my-4">
     <a href="?status=open" class="bg-white border border-cream-deep/60 rounded-2xl p-4 hover:border-ink/20">
         <div class="text-xs text-ink/55 uppercase tracking-wide font-medium">Open</div>
         <div class="text-2xl font-bold mt-1">{{ $stats['open'] }}</div>
@@ -57,8 +57,8 @@
     <button class="px-4 py-2 bg-ink text-cream rounded-xl text-sm">Filter</button>
 </form>
 
-<div class="bg-white rounded-2xl border border-cream-deep/60 overflow-hidden">
-    <table class="w-full text-sm">
+<div class="bg-white rounded-2xl border border-cream-deep/60 overflow-x-auto">
+    <table class="min-w-full text-sm">
         <thead class="text-ink/55 text-xs uppercase tracking-wide">
             <tr class="border-b border-cream-deep/60 bg-cream-deep/30">
                 <th class="text-left px-5 py-3">No. Tiket</th>

@@ -8,9 +8,9 @@
 @endpush
 
 @section('content')
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Tambah Pelanggan</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Tambah Pelanggan</h1>
         <p class="text-sm text-ink/55">Daftarkan pelanggan baru. Auto-billing akan jalan tiap tanggal 1 jika "auto invoice" dicentang & paket sudah dipilih.</p>
     </div>
     <a href="{{ route('customers.index') }}" class="px-4 py-2 bg-white border border-ink/10 rounded-xl">← Kembali</a>
@@ -31,7 +31,7 @@
     {{-- Identitas --}}
     <div>
         <h3 class="text-sm font-bold text-ink/70 mb-3 uppercase">Identitas</h3>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-sm font-medium">Kode Pelanggan</label>
                 <input name="customer_code" value="{{ old('customer_code', $suggestCode) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
@@ -79,7 +79,7 @@
     {{-- Layanan --}}
     <div class="border-t border-cream-deep/60 pt-5">
         <h3 class="text-sm font-bold text-ink/70 mb-3 uppercase">Layanan</h3>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-sm font-medium">Tipe Layanan <span class="text-rose-500">*</span></label>
                 <select name="service_type" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
@@ -167,7 +167,7 @@
     {{-- Billing --}}
     <div class="border-t border-cream-deep/60 pt-5">
         <h3 class="text-sm font-bold text-ink/70 mb-3 uppercase">Billing</h3>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-sm font-medium">Paket Layanan (Harga)</label>
                 <select name="service_plan_id" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">

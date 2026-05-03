@@ -35,7 +35,7 @@
 
 <form id="notifyForm" method="POST" action="{{ route('notifications.invoice', $invoice) }}" class="hidden bg-white border border-cream-deep/60 rounded-2xl p-4 mb-4">
     @csrf
-    <div class="grid grid-cols-3 gap-3 items-end">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
         <div>
             <label class="text-xs text-ink/55">Template</label>
             <select name="template" class="block w-full border border-ink/10 rounded-lg px-3 py-2 text-sm mt-1">
@@ -64,7 +64,7 @@
     <div class="md:col-span-2 space-y-4">
         <div class="bg-white rounded-3xl shadow-card p-6">
             <h3 class="font-bold mb-3">Detail Pelanggan</h3>
-            <div class="grid grid-cols-2 gap-y-2 text-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 text-sm">
                 <div class="text-ink/55">Nama</div>
                 <div class="font-semibold">{{ $invoice->customer?->full_name }}</div>
                 <div class="text-ink/55">Kode</div>
@@ -82,7 +82,7 @@
 
         <div class="bg-white rounded-3xl shadow-card p-6">
             <h3 class="font-bold mb-3">Rincian Tagihan</h3>
-            <div class="grid grid-cols-2 gap-y-2 text-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 text-sm">
                 <div class="text-ink/55">Periode</div>
                 <div>{{ \Carbon\Carbon::create($invoice->period_year, $invoice->period_month, 1)->format('F Y') }}
                     <span class="text-ink/40 text-xs">({{ $invoice->period_start->format('d M') }} – {{ $invoice->period_end->format('d M Y') }})</span>
@@ -113,7 +113,7 @@
             @if($invoice->payments->isEmpty())
                 <p class="text-sm text-ink/50">Belum ada pembayaran tercatat.</p>
             @else
-                <table class="w-full text-sm">
+                <table class="min-w-full text-sm">
                     <thead class="text-ink/70 text-left text-xs uppercase">
                         <tr><th class="py-2">Tgl</th><th>Metode</th><th>Referensi</th><th class="text-right">Jumlah</th><th>Pencatat</th><th></th></tr>
                     </thead>

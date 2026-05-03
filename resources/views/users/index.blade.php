@@ -15,7 +15,7 @@
     <button class="px-3 py-1.5 bg-slate-700 text-white rounded-lg text-sm">Filter</button>
 </form>
 
-<div class="bg-white rounded-xl border border-cream-deep/60 shadow-sm overflow-hidden">
+<div class="bg-white rounded-xl border border-cream-deep/60 shadow-sm overflow-x-auto">
     <table class="min-w-full text-sm">
         <thead class="bg-cream-card text-ink/65">
             <tr>

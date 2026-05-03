@@ -12,7 +12,7 @@
             <label class="text-sm font-medium">Nama Lengkap</label>
             <input name="full_name" required class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-sm font-medium">Username (kosongkan = auto generate)</label>
                 <input name="username" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
@@ -23,7 +23,7 @@
                 <input name="password" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-sm font-medium">Group RADIUS</label>
                 <input name="group" placeholder="{{ config('ahnet.radius.default_pppoe_group') }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
@@ -33,7 +33,7 @@
                 <input name="rate_limit" placeholder="10M/10M" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-sm font-medium">Simultaneous-Use</label>
                 <input name="simultaneous_use" type="number" min="1" max="10" value="1" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
@@ -48,7 +48,7 @@
                 </select>
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-sm font-medium">Mikrotik Profile</label>
                 <input name="mikrotik_profile" placeholder="default" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
@@ -63,7 +63,7 @@
     <form method="POST" action="{{ route('pppoe.bulk') }}" class="bg-white p-6 rounded-xl border border-cream-deep/60 space-y-4">
         @csrf
         <div class="font-semibold">Bulk Create</div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-sm font-medium">Jumlah</label>
                 <input name="count" type="number" min="1" max="1000" value="10" required class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">

@@ -4,7 +4,7 @@
 @section('content')
 <div class="flex items-start justify-between gap-3 mb-4 flex-wrap">
     <div>
-        <h1 class="text-2xl font-bold">Generate Voucher Hotspot</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Generate Voucher Hotspot</h1>
         <p class="text-sm text-ink/55">Bikin batch voucher → auto-insert ke FreeRADIUS → cetak ke A4 (5×6 = 30/lembar).</p>
     </div>
     <a href="{{ route('vouchers.index') }}" class="px-4 py-2 text-sm text-ink/60 hover:bg-cream-deep/60 rounded-xl">← Kembali ke list</a>
@@ -13,10 +13,10 @@
 @if(session('success')) <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 mb-3 text-sm">{{ session('success') }}</div> @endif
 @if($errors->any())     <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-3 mb-3 text-sm"><ul class="list-disc pl-5">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div> @endif
 
-<div class="grid grid-cols-3 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <form method="POST" action="{{ route('vouchers.generate') }}" class="col-span-2 bg-white border border-cream-deep/60 rounded-2xl p-5 space-y-4">
         @csrf
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="col-span-2">
                 <label class="text-sm font-medium">Profile / Paket</label>
                 @if(count($groups) > 0)

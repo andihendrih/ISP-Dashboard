@@ -3,7 +3,7 @@
 @section('breadcrumb','Billing / Tagihan / Buat Manual')
 
 @section('content')
-<h1 class="text-2xl font-bold mb-4">Buat Invoice Manual</h1>
+<h1 class="text-xl sm:text-2xl font-bold mb-4">Buat Invoice Manual</h1>
 
 <form method="POST" action="{{ route('invoices.store') }}" class="bg-white rounded-3xl shadow-card p-6 max-w-2xl space-y-4">
     @csrf
@@ -16,7 +16,7 @@
             @endforeach
         </select>
     </div>
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
             <label class="text-sm font-medium">Periode (YYYY-MM)</label>
             <input name="period" type="text" value="{{ now()->format('Y-m') }}" pattern="\d{4}-\d{2}" required class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">

@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="mb-4">
-    <h1 class="text-2xl font-bold">Tiket Baru</h1>
+    <h1 class="text-xl sm:text-2xl font-bold">Tiket Baru</h1>
     <p class="text-sm text-ink/55">Catat komplain atau permintaan pelanggan AHNet.</p>
 </div>
 
@@ -15,7 +15,7 @@
 
 <form method="POST" action="{{ route('tickets.store') }}" class="bg-white p-6 rounded-2xl border border-cream-deep/60 max-w-3xl space-y-4">
     @csrf
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="col-span-2">
             <label class="text-sm font-medium">Pelanggan <span class="text-ink/40">(opsional)</span></label>
             <select name="customer_profile_id" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">

@@ -7,7 +7,10 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <style>
-    #map { height: calc(100vh - 240px); min-height: 480px; border-radius: 16px; }
+    #map { height: calc(100vh - 280px); min-height: 380px; border-radius: 16px; }
+    @media (max-width: 640px) {
+        #map { height: 60vh; min-height: 320px; }
+    }
     .legend-pill { display:inline-flex; gap:6px; align-items:center; font-size:12px; }
     .legend-pill .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
     .leaflet-popup-content { font-family: inherit; }
@@ -17,7 +20,7 @@
 @section('content')
 <div class="flex items-start justify-between gap-3 mb-4 flex-wrap">
     <div>
-        <h1 class="text-2xl font-bold">Map Pelanggan</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Map Pelanggan</h1>
         <p class="text-sm text-ink/55">Visualisasi sebaran pelanggan berdasarkan koordinat (latitude/longitude).</p>
     </div>
     <div class="flex gap-2 text-xs text-ink/65 flex-wrap">
@@ -28,7 +31,7 @@
     </div>
 </div>
 
-<div class="grid grid-cols-3 gap-3 mb-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
     <div class="bg-white border border-cream-deep/60 rounded-2xl p-4">
         <div class="text-xs text-ink/55">Total Pelanggan</div>
         <div class="text-3xl font-extrabold mt-1">{{ number_format($totalAll) }}</div>

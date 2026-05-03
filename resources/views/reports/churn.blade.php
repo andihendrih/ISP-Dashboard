@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="mb-4">
-    <h1 class="text-2xl font-bold">Laporan Churn &amp; Pertumbuhan</h1>
+    <h1 class="text-xl sm:text-2xl font-bold">Laporan Churn &amp; Pertumbuhan</h1>
     <p class="text-sm text-ink/55">Pertumbuhan, churn rate, &amp; komposisi pelanggan AHNet.</p>
 </div>
 
@@ -27,7 +27,7 @@
     $avgChurn      = $totalNew > 0 ? round((collect($series)->avg('churn_pct') ?? 0), 2) : 0;
 @endphp
 
-<div class="grid grid-cols-4 gap-3 mb-4">
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
     <div class="bg-white border border-cream-deep/60 rounded-2xl p-4">
         <div class="text-xs text-ink/55 uppercase tracking-wide">Pelanggan Aktif</div>
         <div class="text-2xl font-bold mt-1">{{ ($statusComposition['active'] ?? 0) + ($statusComposition['free'] ?? 0) + ($statusComposition['isolir'] ?? 0) }}</div>
@@ -48,7 +48,7 @@
     </div>
 </div>
 
-<div class="grid grid-cols-3 gap-4 mb-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
     <div class="col-span-2 bg-white border border-cream-deep/60 rounded-2xl p-5">
         <h2 class="text-base font-bold mb-3">Pertumbuhan Pelanggan</h2>
         <canvas id="growthChart" height="80"></canvas>
@@ -66,7 +66,7 @@
 
 <div class="bg-white border border-cream-deep/60 rounded-2xl overflow-hidden mb-4">
     <div class="px-5 py-3 border-b border-cream-deep/60"><h2 class="text-base font-bold">Detail per Bulan</h2></div>
-    <table class="w-full text-sm">
+    <table class="min-w-full text-sm">
         <thead class="text-ink/55 text-xs uppercase tracking-wide bg-cream-deep/30">
             <tr>
                 <th class="text-left px-5 py-3">Bulan</th>
@@ -94,7 +94,7 @@
 
 <div class="bg-white border border-cream-deep/60 rounded-2xl overflow-hidden">
     <div class="px-5 py-3 border-b border-cream-deep/60"><h2 class="text-base font-bold">Pelanggan Churn Bulan Ini</h2></div>
-    <table class="w-full text-sm">
+    <table class="min-w-full text-sm">
         <thead class="text-ink/55 text-xs uppercase tracking-wide bg-cream-deep/30">
             <tr>
                 <th class="text-left px-5 py-3">Code</th>

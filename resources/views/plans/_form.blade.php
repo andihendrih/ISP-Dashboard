@@ -1,5 +1,5 @@
 @php($p = $plan)
-<div class="grid grid-cols-2 gap-3">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
     <div>
         <label class="text-sm font-medium">Kode</label>
         <input name="code" required value="{{ old('code', $p?->code) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">

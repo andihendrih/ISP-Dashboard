@@ -6,7 +6,7 @@
 
 <form method="POST" action="{{ route('customers.update', $row->id) }}" class="bg-white p-6 rounded-xl border border-cream-deep/60 max-w-3xl space-y-4">
     @csrf @method('PUT')
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
             <label class="text-sm font-medium">Nama Lengkap</label>
             <input name="full_name" required value="{{ old('full_name', $row->full_name) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">

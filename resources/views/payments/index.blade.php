@@ -3,15 +3,15 @@
 @section('breadcrumb','Billing / Pembayaran')
 
 @section('content')
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Pembayaran</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Pembayaran</h1>
         <p class="text-sm text-ink/55">Riwayat semua transaksi pembayaran invoice.</p>
     </div>
 </div>
 
-<div class="bg-white rounded-3xl shadow-card overflow-hidden">
-    <table class="w-full text-sm">
+<div class="bg-white rounded-3xl shadow-card overflow-x-auto">
+    <table class="min-w-full text-sm">
         <thead class="bg-cream-deep/60 text-ink/70">
             <tr class="text-left">
                 <th class="px-5 py-3">Tgl Bayar</th>

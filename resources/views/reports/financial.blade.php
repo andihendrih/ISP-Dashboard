@@ -4,7 +4,7 @@
 @section('content')
 <div class="flex items-start justify-between gap-3 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Laporan Keuangan</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Laporan Keuangan</h1>
         <p class="text-sm text-ink/55">Revenue, top customer, breakdown pembayaran &amp; outstanding aging.</p>
     </div>
     <a href="{{ route('reports.financial.export', request()->query()) }}" class="px-4 py-2 bg-ink text-cream rounded-xl text-sm font-semibold hover:brightness-95">⬇ Export CSV</a>
@@ -24,7 +24,7 @@
 </form>
 
 {{-- Stat tiles --}}
-<div class="grid grid-cols-4 gap-3 mb-4">
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
     <div class="bg-white border border-cream-deep/60 rounded-2xl p-4">
         <div class="text-xs text-ink/55 uppercase tracking-wide">Total Tagihan</div>
         <div class="text-2xl font-bold mt-1">Rp {{ number_format($totalBilled, 0, ',', '.') }}</div>
@@ -57,14 +57,14 @@
     <canvas id="revChart" height="80"></canvas>
 </div>
 
-<div class="grid grid-cols-2 gap-4 mb-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
     {{-- Method breakdown --}}
     <div class="bg-white border border-cream-deep/60 rounded-2xl p-5">
         <h2 class="text-base font-bold mb-3">Metode Pembayaran</h2>
         @if($methodBreakdown->isEmpty())
             <div class="text-sm text-ink/40 py-6 text-center">Belum ada pembayaran di rentang ini.</div>
         @else
-            <table class="w-full text-sm">
+            <table class="min-w-full text-sm">
                 <thead><tr class="text-ink/55 text-xs uppercase tracking-wide border-b border-cream-deep/60"><th class="text-left py-2">Method</th><th class="text-right">Jumlah</th><th class="text-right">Total</th></tr></thead>
                 <tbody>
                 @foreach($methodBreakdown as $m)
@@ -106,7 +106,7 @@
     <div class="px-5 py-3 border-b border-cream-deep/60">
         <h2 class="text-base font-bold">Top 10 Pelanggan (by revenue)</h2>
     </div>
-    <table class="w-full text-sm">
+    <table class="min-w-full text-sm">
         <thead class="text-ink/55 text-xs uppercase tracking-wide bg-cream-deep/30">
             <tr>
                 <th class="text-left px-5 py-3">#</th>

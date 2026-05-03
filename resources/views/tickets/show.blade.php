@@ -22,7 +22,7 @@
 <div class="mb-4 flex items-start justify-between gap-3">
     <div>
         <div class="text-xs text-ink/55 font-mono">{{ $ticket->ticket_number }}</div>
-        <h1 class="text-2xl font-bold">{{ $ticket->subject }}</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">{{ $ticket->subject }}</h1>
         <div class="flex gap-2 mt-2">
             <span class="text-xs px-2 py-0.5 rounded-full border {{ $sBadge }}">{{ $ticket->status_label }}</span>
             <span class="text-xs px-2 py-0.5 rounded-full border {{ $pBadge }}">Prioritas: {{ ucfirst($ticket->priority) }}</span>
@@ -36,12 +36,12 @@
     <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-3 mb-4 text-sm">{{ session('success') }}</div>
 @endif
 
-<div class="grid grid-cols-3 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     {{-- Konten utama --}}
     <div class="col-span-2 space-y-4">
         {{-- Original ticket --}}
         <div class="bg-white border border-cream-deep/60 rounded-2xl p-5">
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
                 <div class="text-sm font-semibold">{{ $ticket->creator?->name ?? 'System' }}</div>
                 <div class="text-xs text-ink/50">{{ $ticket->created_at->format('d M Y, H:i') }}</div>
             </div>
@@ -51,7 +51,7 @@
         {{-- Comments thread --}}
         @foreach($ticket->comments as $cmt)
             <div class="border rounded-2xl p-4 {{ $cmt->is_internal ? 'bg-amber-50/40 border-amber-200' : 'bg-white border-cream-deep/60' }}">
-                <div class="flex items-center justify-between mb-2">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
                     <div class="flex items-center gap-2">
                         <div class="w-7 h-7 rounded-full bg-accent/40 grid place-items-center text-xs font-bold">{{ strtoupper(substr($cmt->user?->name ?? 'S', 0, 1)) }}</div>
                         <div class="text-sm font-medium">{{ $cmt->user?->name ?? 'System' }}</div>

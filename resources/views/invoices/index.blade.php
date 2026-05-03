@@ -12,9 +12,9 @@
     ];
 @endphp
 
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Tagihan</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Tagihan</h1>
         <p class="text-sm text-ink/55">Kelola invoice bulanan pelanggan.</p>
     </div>
     <div class="flex gap-2">
@@ -24,7 +24,7 @@
 </div>
 
 {{-- Stat tiles --}}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-5">
     <div class="bg-white rounded-3xl p-5 shadow-card">
         <div class="text-xs text-ink/55 uppercase font-semibold">Outstanding</div>
         <div class="text-2xl font-bold mt-1">Rp {{ number_format($summary['total_outstanding'], 0, ',', '.') }}</div>
@@ -59,8 +59,8 @@
     @endif
 </form>
 
-<div class="bg-white rounded-3xl shadow-card overflow-hidden">
-    <table class="w-full text-sm">
+<div class="bg-white rounded-3xl shadow-card overflow-x-auto">
+    <table class="min-w-full text-sm">
         <thead class="bg-cream-deep/60 text-ink/70">
             <tr class="text-left">
                 <th class="px-5 py-3">No. Invoice</th>

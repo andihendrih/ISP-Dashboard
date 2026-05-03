@@ -40,14 +40,43 @@
         .nav-item:hover { background:#ffffff; }
         .nav-item.active { background:#1a1a1a; color:#fff; box-shadow: 0 6px 20px -8px rgba(0,0,0,.4); }
         .nav-section { font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:#8a7e5b; padding:1rem .9rem .35rem; }
+
+        /* Mobile sidebar drawer */
+        @media (max-width: 767px) {
+            .ah-sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                bottom: 0 !important;
+                width: 80% !important;
+                max-width: 18rem !important;
+                max-height: 100vh !important;
+                z-index: 50;
+                transform: translateX(-100%);
+                transition: transform .25s ease-out;
+                border-radius: 0 1.5rem 1.5rem 0 !important;
+                box-shadow: 0 10px 40px -10px rgba(0,0,0,.3);
+            }
+            body.ah-sidebar-open .ah-sidebar { transform: translateX(0); }
+            body.ah-sidebar-open .ah-backdrop { opacity: 1; pointer-events: auto; }
+        }
+        .ah-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,.4);
+            opacity: 0; pointer-events: none;
+            transition: opacity .25s; z-index: 40;
+        }
+        @media (min-width: 768px) {
+            .ah-backdrop { display: none !important; }
+        }
     </style>
     @stack('head')
 </head>
 <body class="h-full bg-cream text-ink">
-<div class="flex min-h-screen p-4 gap-4">
+<div class="ah-backdrop" id="ah-backdrop" onclick="document.body.classList.remove('ah-sidebar-open')"></div>
+<div class="flex min-h-screen p-3 sm:p-4 gap-3 sm:gap-4">
 
     {{-- Sidebar --}}
-    <aside class="w-60 shrink-0 bg-cream-deep/60 backdrop-blur rounded-3xl flex flex-col p-4 sticky top-4 self-start max-h-[calc(100vh-2rem)]">
+    <aside class="ah-sidebar w-60 shrink-0 bg-cream-deep/60 backdrop-blur rounded-3xl flex flex-col p-4 sticky top-4 self-start max-h-[calc(100vh-2rem)]">
         <div class="px-2 py-2 flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-ink text-accent flex items-center justify-center font-extrabold text-lg">A</div>
             <div>
@@ -169,17 +198,24 @@
     <div class="flex-1 flex flex-col min-w-0">
 
         {{-- Top bar --}}
-        <header class="flex items-center justify-between mb-4 px-2">
-            <div class="text-sm text-ink/55">
-                <span class="font-semibold text-ink/80">{{ config('ahnet.company') }}</span>
-                <span class="mx-2 text-ink/30">/</span>
-                <span>@yield('breadcrumb', 'Dashboard')</span>
+        <header class="flex items-center justify-between mb-3 sm:mb-4 px-1 sm:px-2 gap-2">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+                {{-- Hamburger (mobile only) --}}
+                <button type="button" class="md:hidden w-10 h-10 rounded-xl bg-white shadow-card flex items-center justify-center shrink-0"
+                        onclick="document.body.classList.toggle('ah-sidebar-open')" aria-label="Menu">
+                    <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                <div class="text-xs sm:text-sm text-ink/55 truncate">
+                    <span class="font-semibold text-ink/80">{{ config('ahnet.company') }}</span>
+                    <span class="mx-1 sm:mx-2 text-ink/30">/</span>
+                    <span>@yield('breadcrumb', 'Dashboard')</span>
+                </div>
             </div>
-            <div class="flex items-center gap-3 text-sm">
-                <div class="bg-white rounded-2xl px-4 py-2 shadow-card text-ink/70 font-medium hidden md:block">
+            <div class="flex items-center gap-2 sm:gap-3 text-sm shrink-0">
+                <div class="bg-white rounded-2xl px-3 sm:px-4 py-2 shadow-card text-ink/70 font-medium hidden lg:block">
                     <span id="now-clock">{{ now()->format('l, d M Y · H:i:s') }}</span>
                 </div>
-                <div class="bg-white rounded-2xl px-4 py-2 shadow-card text-ink/70 font-medium">
+                <div class="bg-white rounded-2xl px-3 sm:px-4 py-2 shadow-card text-ink/70 font-medium text-xs sm:text-sm">
                     {{ config('app.timezone') }}
                 </div>
             </div>
@@ -209,12 +245,24 @@
 <script>
     (function () {
         const el = document.getElementById('now-clock');
-        if (!el) return;
-        const fmt = new Intl.DateTimeFormat('id-ID', {
-            weekday: 'long', day: '2-digit', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+        if (el) {
+            const fmt = new Intl.DateTimeFormat('id-ID', {
+                weekday: 'long', day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+            });
+            setInterval(() => { el.textContent = fmt.format(new Date()).replace(',', ' ·'); }, 1000);
+        }
+
+        // Auto-close mobile sidebar on nav link click & on route change
+        document.querySelectorAll('aside.ah-sidebar a.nav-item').forEach(a => {
+            a.addEventListener('click', () => {
+                if (window.innerWidth < 768) document.body.classList.remove('ah-sidebar-open');
+            });
         });
-        setInterval(() => { el.textContent = fmt.format(new Date()).replace(',', ' ·'); }, 1000);
+        // Close on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') document.body.classList.remove('ah-sidebar-open');
+        });
     })();
 </script>
 @stack('scripts')

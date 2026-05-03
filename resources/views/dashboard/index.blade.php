@@ -17,7 +17,7 @@
                 </h1>
                 <p class="mt-1 text-ink/55 text-sm">{{ now()->locale('id')->translatedFormat('l, d F Y') }} — selamat datang kembali.</p>
 
-                <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     <a href="{{ route('customers.index') }}" class="bg-white rounded-2xl p-4 shadow-card hover:shadow-soft transition group">
                         <div class="w-9 h-9 rounded-xl bg-accent/30 text-ink flex items-center justify-center mb-3">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11a4 4 0 10-8 0 4 4 0 008 0zM2 22a10 10 0 0120 0"/></svg>
@@ -75,7 +75,7 @@
     {{-- Charts row --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-card">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div>
                     <div class="font-bold text-lg">Pelanggan Baru Tahunan</div>
                     <div class="text-xs text-ink/50 mt-0.5">Tren penambahan pelanggan per bulan</div>
@@ -101,7 +101,7 @@
 
     @if($billing)
         {{-- Billing summary --}}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div class="bg-white rounded-3xl p-5 shadow-card">
                 <div class="text-xs text-ink/55 uppercase font-semibold">Total Outstanding</div>
                 <div class="text-2xl font-bold mt-1">Rp {{ number_format($billing['outstanding'], 0, ',', '.') }}</div>
@@ -145,7 +145,7 @@
         </div>
 
         <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-card">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div>
                     <div class="font-bold text-lg">Pelanggan Terbaru</div>
                     <div class="text-xs text-ink/50 mt-0.5">8 pelanggan terakhir terdaftar</div>

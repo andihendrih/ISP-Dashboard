@@ -4,7 +4,7 @@
 @section('content')
 <div class="flex items-start justify-between gap-3 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Pengaturan Notifikasi</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Pengaturan Notifikasi</h1>
         <p class="text-sm text-ink/55">WhatsApp &amp; Email reminder pembayaran. Provider WA aktif: <span class="font-mono px-2 py-0.5 rounded bg-cream-deep/60 text-ink">{{ $provider }}</span></p>
     </div>
     <a href="{{ route('notifications.logs') }}" class="px-4 py-2 bg-ink text-cream rounded-xl text-sm font-semibold hover:brightness-95">📋 Log Notifikasi</a>
@@ -13,7 +13,7 @@
 @if(session('success')) <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 mb-3 text-sm">{{ session('success') }}</div> @endif
 @if(session('error'))   <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-3 mb-3 text-sm">{{ session('error') }}</div> @endif
 
-<div class="grid grid-cols-3 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <div class="col-span-2 space-y-4">
         <form method="POST" action="{{ route('notifications.settings.save') }}" class="bg-white border border-cream-deep/60 rounded-2xl p-5">
             @csrf

@@ -4,7 +4,7 @@
 @section('content')
 <div class="flex items-start justify-between gap-3 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Voucher Hotspot</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Voucher Hotspot</h1>
         <p class="text-sm text-ink/55">User RADIUS dengan grup <code>Hotspot*</code> &amp; <code>HS_*</code>. Voucher tidak ikut billing bulanan.</p>
     </div>
     <div class="flex gap-2">
@@ -19,7 +19,7 @@
 @if(session('success')) <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 mb-3 text-sm">{{ session('success') }}</div> @endif
 @if(session('error'))   <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-3 mb-3 text-sm">{{ session('error') }}</div> @endif
 
-<div class="grid grid-cols-3 gap-3 mb-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
     <div class="bg-white border border-cream-deep/60 rounded-2xl p-4">
         <div class="text-xs text-ink/55">Total Voucher</div>
         <div class="text-3xl font-extrabold mt-1">{{ number_format($total) }}</div>
@@ -60,8 +60,8 @@
     <a href="{{ route('vouchers.index') }}" class="px-3 py-2 text-sm text-ink/55 hover:bg-cream-deep/60 rounded-xl">Reset</a>
 </form>
 
-<div class="bg-white border border-cream-deep/60 rounded-2xl overflow-hidden">
-    <table class="w-full text-sm">
+<div class="bg-white border border-cream-deep/60 rounded-2xl overflow-x-auto">
+    <table class="min-w-full text-sm">
         <thead class="text-ink/55 text-xs uppercase tracking-wide bg-cream-deep/30">
             <tr>
                 <th class="text-left px-5 py-3">Kode</th>

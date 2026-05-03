@@ -3,16 +3,16 @@
 @section('breadcrumb','Billing / Paket Layanan')
 
 @section('content')
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Paket Layanan</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Paket Layanan</h1>
         <p class="text-sm text-ink/55">Master harga per paket. Dipakai untuk auto-generate invoice bulanan.</p>
     </div>
     <a href="{{ route('plans.create') }}" class="px-4 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black">+ Tambah Paket</a>
 </div>
 
-<div class="bg-white rounded-3xl shadow-card overflow-hidden">
-    <table class="w-full text-sm">
+<div class="bg-white rounded-3xl shadow-card overflow-x-auto">
+    <table class="min-w-full text-sm">
         <thead class="bg-cream-deep/60 text-ink/70">
             <tr class="text-left">
                 <th class="px-5 py-3">Kode</th>

@@ -4,7 +4,7 @@
 @section('content')
 <div class="flex items-start justify-between gap-3 mb-4 flex-wrap">
     <div>
-        <h1 class="text-2xl font-bold">{{ $batch->label ?? 'Batch #'.$batch->id }}</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">{{ $batch->label ?? 'Batch #'.$batch->id }}</h1>
         <p class="text-sm text-ink/55">
             Profile <code>{{ $batch->profile }}</code> ·
             {{ $batch->count }} voucher ·
@@ -19,7 +19,7 @@
 </div>
 
 <div class="bg-white border border-cream-deep/60 rounded-2xl p-5">
-    <div class="grid grid-cols-6 gap-2 font-mono text-sm">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 font-mono text-sm">
         @foreach($batch->codes as $code)
             <div class="border border-ink/10 rounded-lg px-2 py-1.5 text-center">{{ $code }}</div>
         @endforeach

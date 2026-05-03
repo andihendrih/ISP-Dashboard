@@ -13,20 +13,20 @@
     ];
 @endphp
 
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
     <div>
-        <h1 class="text-2xl font-bold">Pelanggan</h1>
+        <h1 class="text-xl sm:text-2xl font-bold">Pelanggan</h1>
         <p class="text-sm text-ink/55">Daftar pelanggan AHNet.</p>
     </div>
-    <a href="{{ route('customers.create') }}" class="px-4 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black">+ Tambah Pelanggan</a>
+    <a href="{{ route('customers.create') }}" class="px-4 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black text-sm whitespace-nowrap self-start sm:self-auto">+ Tambah Pelanggan</a>
 </div>
 
 @if(session('success'))
     <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-3 mb-4 text-sm">{{ session('success') }}</div>
 @endif
 
-<form method="GET" class="mb-4 flex gap-2">
-    <input name="q" value="{{ request('q') }}" placeholder="Cari nama / kode / username" class="flex-1 max-w-md border border-ink/10 rounded-xl text-sm px-3 py-2 bg-white">
+<form method="GET" class="mb-4 flex flex-wrap gap-2">
+    <input name="q" value="{{ request('q') }}" placeholder="Cari nama / kode / username" class="flex-1 min-w-[200px] sm:max-w-md border border-ink/10 rounded-xl text-sm px-3 py-2 bg-white">
     <select name="status" class="border border-ink/10 rounded-xl text-sm bg-white px-3">
         <option value="">— Semua Status —</option>
         @foreach(['active','isolir','free','pending','inactive'] as $s)
@@ -39,7 +39,7 @@
     @endif
 </form>
 
-<div class="bg-white rounded-3xl shadow-card overflow-hidden">
+<div class="bg-white rounded-3xl shadow-card overflow-x-auto">
     <table class="min-w-full text-sm">
         <thead class="bg-cream-deep/60 text-ink/70">
             <tr>
