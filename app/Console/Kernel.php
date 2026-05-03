@@ -14,6 +14,13 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('snmp:poll')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('genieacs:sync')->everyFifteenMinutes()->withoutOverlapping();
+
+        // Billing: generate invoices on day 1 at 00:05; mark overdue daily at 00:30
+        $schedule->command('billing:generate-monthly')->monthlyOn(1, '00:05')->withoutOverlapping();
+        $schedule->command('billing:mark-overdue')->dailyAt('00:30')->withoutOverlapping();
+
+        // Notifications: kirim reminder H-3, H-0, dan overdue setiap pagi 08:00
+        $schedule->command('notify:reminders')->dailyAt('08:00')->withoutOverlapping();
     }
 
     /**

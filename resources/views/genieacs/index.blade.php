@@ -2,7 +2,7 @@
 @section('title','GenieACS')
 
 @section('content')
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
     <h1 class="text-xl font-bold">GenieACS Devices</h1>
     <form method="POST" action="{{ route('genieacs.sync') }}">
         @csrf
@@ -10,7 +10,7 @@
     </form>
 </div>
 
-<div class="bg-white rounded-xl border border-cream-deep/60 overflow-hidden">
+<div class="bg-white rounded-xl border border-cream-deep/60 overflow-x-auto">
     <table class="min-w-full text-sm">
         <thead class="bg-cream-card text-ink/65">
             <tr>
