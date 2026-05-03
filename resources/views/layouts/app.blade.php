@@ -33,13 +33,14 @@
         };
     </script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4ecd8; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f4ecd8; font-size: 14px; }
         .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 999px; }
-        .nav-item { display:flex; align-items:center; gap:.65rem; padding:.65rem .9rem; border-radius:1rem; font-weight:500; color:#3b3b3b; transition:all .15s; }
+        .nav-item { display:flex; align-items:center; gap:.6rem; padding:.5rem .8rem; border-radius:.85rem; font-weight:500; color:#3b3b3b; transition:all .15s; font-size: .85rem; }
         .nav-item:hover { background:#ffffff; }
         .nav-item.active { background:#1a1a1a; color:#fff; box-shadow: 0 6px 20px -8px rgba(0,0,0,.4); }
-        .nav-section { font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:#8a7e5b; padding:1rem .9rem .35rem; }
+        .nav-item svg { width: .95rem; height: .95rem; flex-shrink: 0; }
+        .nav-section { font-size:.65rem; letter-spacing:.08em; text-transform:uppercase; color:#8a7e5b; padding:.75rem .8rem .25rem; }
 
         /* Mobile sidebar drawer */
         @media (max-width: 767px) {
@@ -47,18 +48,24 @@
                 position: fixed !important;
                 top: 0 !important;
                 left: 0 !important;
-                bottom: 0 !important;
-                width: 80% !important;
+                width: 82% !important;
                 max-width: 18rem !important;
-                max-height: 100vh !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                max-height: none !important;
                 z-index: 50;
                 transform: translateX(-100%);
                 transition: transform .25s ease-out;
                 border-radius: 0 1.5rem 1.5rem 0 !important;
                 box-shadow: 0 10px 40px -10px rgba(0,0,0,.3);
+                margin: 0 !important;
+                padding: 1rem !important;
+                overflow: hidden;
             }
+            .ah-sidebar > nav { min-height: 0; }
             body.ah-sidebar-open .ah-sidebar { transform: translateX(0); }
             body.ah-sidebar-open .ah-backdrop { opacity: 1; pointer-events: auto; }
+            body.ah-sidebar-open { overflow: hidden; }
         }
         .ah-backdrop {
             position: fixed; inset: 0; background: rgba(0,0,0,.4);
@@ -68,6 +75,11 @@
         @media (min-width: 768px) {
             .ah-backdrop { display: none !important; }
         }
+
+        /* Desktop default — kompak */
+        @media (min-width: 768px) {
+            h1 { line-height: 1.2; }
+        }
     </style>
     @stack('head')
 </head>
@@ -76,12 +88,12 @@
 <div class="flex min-h-screen p-3 sm:p-4 gap-3 sm:gap-4">
 
     {{-- Sidebar --}}
-    <aside class="ah-sidebar w-60 shrink-0 bg-cream-deep/60 backdrop-blur rounded-3xl flex flex-col p-4 sticky top-4 self-start max-h-[calc(100vh-2rem)]">
-        <div class="px-2 py-2 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-ink text-accent flex items-center justify-center font-extrabold text-lg">A</div>
+    <aside class="ah-sidebar w-52 shrink-0 bg-cream-deep/60 backdrop-blur rounded-3xl flex flex-col p-3 sticky top-4 self-start max-h-[calc(100vh-2rem)]">
+        <div class="px-2 py-1.5 flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-ink text-accent flex items-center justify-center font-extrabold text-base">A</div>
             <div>
-                <div class="font-extrabold leading-tight text-ink">AHNet</div>
-                <div class="text-xs text-ink/50 font-medium">ISP Dashboard</div>
+                <div class="font-extrabold leading-tight text-ink text-sm">AHNet</div>
+                <div class="text-[10px] text-ink/50 font-medium">ISP Dashboard</div>
             </div>
         </div>
 
@@ -179,16 +191,16 @@
         </nav>
 
         {{-- User profile pill --}}
-        <div class="mt-3 bg-white rounded-2xl p-3 flex items-center gap-3 shadow-card">
-            <div class="w-9 h-9 rounded-full bg-accent text-ink flex items-center justify-center font-bold">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
+        <div class="mt-2 bg-white rounded-2xl p-2.5 flex items-center gap-2 shadow-card shrink-0">
+            <div class="w-8 h-8 rounded-full bg-accent text-ink flex items-center justify-center font-bold text-sm shrink-0">{{ strtoupper(substr(auth()->user()->name ?? '?', 0, 1)) }}</div>
             <div class="flex-1 min-w-0">
-                <div class="text-sm font-semibold truncate">{{ auth()->user()->name }}</div>
-                <div class="text-xs text-ink/50 capitalize">{{ $role ?? 'user' }}</div>
+                <div class="text-xs font-semibold truncate">{{ auth()->user()->name }}</div>
+                <div class="text-[10px] text-ink/50 capitalize">{{ $role ?? 'user' }}</div>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button title="Logout" class="w-8 h-8 rounded-lg bg-cream-deep hover:bg-ink hover:text-white flex items-center justify-center transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H9m0-8H5a2 2 0 00-2 2v12a2 2 0 002 2h4"/></svg>
+                <button title="Logout" class="w-7 h-7 rounded-lg bg-cream-deep hover:bg-ink hover:text-white flex items-center justify-center transition shrink-0">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H9m0-8H5a2 2 0 00-2 2v12a2 2 0 002 2h4"/></svg>
                 </button>
             </form>
         </div>
@@ -211,11 +223,11 @@
                     <span>@yield('breadcrumb', 'Dashboard')</span>
                 </div>
             </div>
-            <div class="flex items-center gap-2 sm:gap-3 text-sm shrink-0">
-                <div class="bg-white rounded-2xl px-3 sm:px-4 py-2 shadow-card text-ink/70 font-medium hidden lg:block">
+            <div class="flex items-center gap-2 text-xs sm:text-sm shrink-0">
+                <div class="bg-white rounded-xl px-3 py-1.5 shadow-card text-ink/70 font-medium hidden lg:block">
                     <span id="now-clock">{{ now()->format('l, d M Y · H:i:s') }}</span>
                 </div>
-                <div class="bg-white rounded-2xl px-3 sm:px-4 py-2 shadow-card text-ink/70 font-medium text-xs sm:text-sm">
+                <div class="bg-white rounded-xl px-3 py-1.5 shadow-card text-ink/70 font-medium">
                     {{ config('app.timezone') }}
                 </div>
             </div>
