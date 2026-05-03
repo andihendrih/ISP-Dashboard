@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Radius\Radacct;
 use App\Models\Radius\Radcheck;
 use App\Models\Radius\Radusergroup;
+use App\Models\VoucherBatch;
 use App\Services\RadiusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class VoucherController extends Controller
@@ -134,5 +137,129 @@ class VoucherController extends Controller
         });
 
         return back()->with('success', "{$count} voucher expired berhasil dihapus.");
+    }
+
+    /** Halaman generator + history batch. */
+    public function generateForm(): View
+    {
+        $groups   = $this->safeHotspotGroups();
+        $batches  = VoucherBatch::orderByDesc('id')->limit(20)->get();
+        return view('vouchers.generate', compact('groups', 'batches'));
+    }
+
+    /** Generate batch voucher → insert ke RADIUS + simpan metadata batch. */
+    public function generate(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'profile'     => 'required|string|max:64',
+            'count'       => 'required|integer|min:1|max:300',
+            'code_length' => 'required|integer|min:4|max:12',
+            'prefix'      => 'nullable|string|max:8|alpha_dash',
+            'expires_in_days' => 'nullable|integer|min:0|max:3650',
+            'label'       => 'nullable|string|max:120',
+        ]);
+
+        $count   = (int) $data['count'];
+        $len     = (int) $data['code_length'];
+        $prefix  = strtoupper((string) ($data['prefix'] ?? ''));
+        $profile = (string) $data['profile'];
+        $days    = (int) ($data['expires_in_days'] ?? 0);
+        $expires = $days > 0 ? Carbon::now()->addDays($days) : null;
+
+        // Generate codes (avoid collision with existing radcheck.username)
+        $existing = Radcheck::where('attribute', 'Cleartext-Password')->pluck('username')->flip();
+        $codes    = [];
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // skip I,O,0,1 (mudah salah baca)
+
+        while (count($codes) < $count) {
+            $code = $prefix . $this->randomCode($len, $alphabet);
+            if (isset($existing[$code]) || in_array($code, $codes, true)) continue;
+            $codes[] = $code;
+        }
+
+        DB::connection('radius')->transaction(function () use ($codes, $profile, $expires) {
+            foreach ($codes as $code) {
+                Radcheck::create([
+                    'username'  => $code,
+                    'attribute' => 'Cleartext-Password',
+                    'op'        => ':=',
+                    'value'     => $code,
+                ]);
+                if ($expires) {
+                    Radcheck::create([
+                        'username'  => $code,
+                        'attribute' => 'Expiration',
+                        'op'        => ':=',
+                        'value'     => $expires->format('M j Y H:i:s'),
+                    ]);
+                }
+                Radusergroup::create([
+                    'username'  => $code,
+                    'groupname' => $profile,
+                    'priority'  => 1,
+                ]);
+            }
+        });
+
+        $batch = VoucherBatch::create([
+            'label'       => $data['label'] ?? null,
+            'profile'     => $profile,
+            'count'       => $count,
+            'prefix'      => $prefix ?: null,
+            'code_length' => $len,
+            'expires_at'  => $expires?->toDateString(),
+            'codes'       => $codes,
+            'created_by'  => Auth::id(),
+        ]);
+
+        return redirect()->route('vouchers.batch.print', $batch->id)
+            ->with('success', "{$count} voucher berhasil di-generate. Klik tombol Cetak untuk print A4.");
+    }
+
+    public function batchPrint(VoucherBatch $batch): View
+    {
+        return view('vouchers.print', ['batch' => $batch]);
+    }
+
+    public function batchShow(VoucherBatch $batch): View
+    {
+        return view('vouchers.batch-show', ['batch' => $batch]);
+    }
+
+    public function batchDestroy(VoucherBatch $batch): RedirectResponse
+    {
+        // Hapus voucher dari RADIUS juga
+        $codes = (array) $batch->codes;
+        DB::connection('radius')->transaction(function () use ($codes) {
+            foreach ($codes as $code) {
+                $this->radius->deleteUser($code);
+            }
+        });
+        $batch->delete();
+        return redirect()->route('vouchers.generate-form')
+            ->with('success', "Batch '{$batch->label}' beserta " . count($codes) . " voucher dihapus.");
+    }
+
+    /* --- helpers --- */
+
+    /** Daftar grup hotspot (Hotspot* + HS_*) buat dropdown profile generator. */
+    protected function safeHotspotGroups(): array
+    {
+        try {
+            $all = $this->radius->listGroups(false);
+            return $all->filter(fn ($g) => RadiusService::isVoucherGroup($g))->values()->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    private function randomCode(int $len, string $alphabet): string
+    {
+        $max = strlen($alphabet) - 1;
+        $out = '';
+        for ($i = 0; $i < $len; $i++) {
+            $out .= $alphabet[random_int(0, $max)];
+        }
+        return $out;
     }
 }

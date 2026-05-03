@@ -7,10 +7,13 @@
         <h1 class="text-2xl font-bold">Voucher Hotspot</h1>
         <p class="text-sm text-ink/55">User RADIUS dengan grup <code>Hotspot*</code> &amp; <code>HS_*</code>. Voucher tidak ikut billing bulanan.</p>
     </div>
-    <form method="POST" action="{{ route('vouchers.bulk-expired') }}" onsubmit="return confirm('Hapus SEMUA voucher expired? Action ini hard delete dari RADIUS dan tidak bisa di-undo.');">
-        @csrf
-        <button class="px-4 py-2 bg-rose-600 text-white rounded-xl text-sm font-semibold hover:bg-rose-700">🗑 Hapus Semua Expired</button>
-    </form>
+    <div class="flex gap-2">
+        <a href="{{ route('vouchers.generate-form') }}" class="px-4 py-2 bg-accent text-ink rounded-xl text-sm font-semibold">+ Generate Voucher</a>
+        <form method="POST" action="{{ route('vouchers.bulk-expired') }}" onsubmit="return confirm('Hapus SEMUA voucher expired? Action ini hard delete dari RADIUS dan tidak bisa di-undo.');">
+            @csrf
+            <button class="px-4 py-2 bg-rose-600 text-white rounded-xl text-sm font-semibold hover:bg-rose-700">🗑 Hapus Expired</button>
+        </form>
+    </div>
 </div>
 
 @if(session('success')) <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 mb-3 text-sm">{{ session('success') }}</div> @endif

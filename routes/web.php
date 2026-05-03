@@ -114,6 +114,14 @@ Route::middleware('auth')->group(function () {
         /* Voucher Hotspot (sourced from FreeRADIUS Hotspot* / HS_* groups) */
         Route::get('/vouchers',                       [VoucherController::class, 'index'])->name('vouchers.index');
         Route::post('/vouchers/bulk-expired',         [VoucherController::class, 'bulkDeleteExpired'])->name('vouchers.bulk-expired');
+
+        /* Voucher generator + cetak A4 (5x6 = 30/lembar) */
+        Route::get('/vouchers/generate',              [VoucherController::class, 'generateForm'])->name('vouchers.generate-form');
+        Route::post('/vouchers/generate',             [VoucherController::class, 'generate'])->name('vouchers.generate');
+        Route::get('/vouchers/batch/{batch}/print',   [VoucherController::class, 'batchPrint'])->name('vouchers.batch.print');
+        Route::get('/vouchers/batch/{batch}',         [VoucherController::class, 'batchShow'])->name('vouchers.batch.show');
+        Route::delete('/vouchers/batch/{batch}',      [VoucherController::class, 'batchDestroy'])->name('vouchers.batch.destroy');
+
         Route::delete('/vouchers/{username}',         [VoucherController::class, 'destroy'])
             ->where('username', '.*')->name('vouchers.destroy');
 
