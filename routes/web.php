@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GenieacsController;
 use App\Http\Controllers\HotspotController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\MikrotikController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
@@ -41,6 +42,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('/customers/{id}',      [CustomerController::class, 'update'])->name('customers.update');
         Route::delete('/customers/{id}',   [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+        /* Map view pelanggan (Leaflet + OpenStreetMap) */
+        Route::get('/map',           [MapController::class, 'index'])->name('map.index');
+        Route::get('/map/customers', [MapController::class, 'customers'])->name('map.customers');
 
         Route::get('/users-radius',          [UserManagementController::class, 'index'])->name('users.index');
         Route::get('/users-radius/{username}', [UserManagementController::class, 'show'])

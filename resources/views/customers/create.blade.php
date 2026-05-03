@@ -2,6 +2,11 @@
 @section('title','Tambah Pelanggan')
 @section('breadcrumb','Pelanggan / Baru')
 
+@push('head')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+@endpush
+
 @section('content')
 <div class="flex items-center justify-between mb-4">
     <div>
@@ -55,11 +60,18 @@
             </div>
             <div>
                 <label class="text-sm font-medium">Latitude</label>
-                <input name="latitude" type="number" step="0.0000001" value="{{ old('latitude') }}" placeholder="-6.200000" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+                <input id="lat-input" name="latitude" type="number" step="0.0000001" value="{{ old('latitude') }}" placeholder="-6.200000" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
             </div>
             <div>
                 <label class="text-sm font-medium">Longitude</label>
-                <input name="longitude" type="number" step="0.0000001" value="{{ old('longitude') }}" placeholder="106.816666" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+                <input id="lng-input" name="longitude" type="number" step="0.0000001" value="{{ old('longitude') }}" placeholder="106.816666" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+            </div>
+            <div class="col-span-2">
+                <div class="flex items-center justify-between">
+                    <label class="text-sm font-medium">Pin di Peta <span class="text-ink/40 font-normal">(klik untuk set lokasi)</span></label>
+                    <button type="button" id="btn-locate" class="text-xs px-2 py-1 bg-cream-deep/60 rounded-lg hover:bg-cream-deep">📍 Pakai lokasi saya</button>
+                </div>
+                <div id="pick-map" class="mt-2 rounded-xl border border-ink/10" style="height:280px;"></div>
             </div>
         </div>
     </div>
@@ -209,5 +221,48 @@ function genPwd() {
     for (let i = 0; i < 10; i++) p += chars.charAt(Math.floor(Math.random() * chars.length));
     document.getElementById('rpw').value = p;
 }
+</script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function () {
+    const latInput = document.getElementById('lat-input');
+    const lngInput = document.getElementById('lng-input');
+    if (!latInput || !lngInput || !document.getElementById('pick-map')) return;
+
+    const initLat = parseFloat(latInput.value) || -6.200000;
+    const initLng = parseFloat(lngInput.value) || 106.816666;
+
+    const map = L.map('pick-map').setView([initLat, initLng], (latInput.value && lngInput.value) ? 16 : 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    let marker = null;
+    function setPin(lat, lng) {
+        if (marker) marker.setLatLng([lat, lng]); else marker = L.marker([lat, lng], {draggable:true}).addTo(map);
+        marker.on('dragend', () => { const p = marker.getLatLng(); latInput.value = p.lat.toFixed(7); lngInput.value = p.lng.toFixed(7); });
+        latInput.value = lat.toFixed(7);
+        lngInput.value = lng.toFixed(7);
+    }
+    if (latInput.value && lngInput.value) setPin(initLat, initLng);
+
+    map.on('click', (e) => setPin(e.latlng.lat, e.latlng.lng));
+
+    document.getElementById('btn-locate').addEventListener('click', () => {
+        if (!navigator.geolocation) { alert('Browser tidak support geolocation.'); return; }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => { setPin(pos.coords.latitude, pos.coords.longitude); map.setView([pos.coords.latitude, pos.coords.longitude], 16); },
+            (err) => alert('Gagal akses lokasi: ' + err.message)
+        );
+    });
+
+    // Sync from manual input
+    [latInput, lngInput].forEach(inp => inp.addEventListener('change', () => {
+        const la = parseFloat(latInput.value), ln = parseFloat(lngInput.value);
+        if (!isNaN(la) && !isNaN(ln)) { setPin(la, ln); map.setView([la, ln], 16); }
+    }));
+})();
 </script>
 @endsection
