@@ -77,7 +77,14 @@
                             <span class="text-ink/30">—</span>
                         @endif
                     </td>
-                    <td class="px-5 py-3 text-right"><a href="{{ route('customers.edit', $r->id) }}" class="text-ink/60 text-xs hover:text-ink">Edit →</a></td>
+                    <td class="px-5 py-3 text-right whitespace-nowrap">
+                        <a href="{{ route('customers.edit', $r->id) }}" class="text-ink/60 text-xs hover:text-ink">Edit</a>
+                        <span class="text-ink/20">·</span>
+                        <form method="POST" action="{{ route('customers.destroy', $r->id) }}" class="inline" onsubmit="return confirm('Hapus pelanggan {{ $r->customer_code }} — {{ addslashes($r->full_name) }}? Data RADIUS (radcheck/radreply/radusergroup/radacct/radpostauth) juga akan dihapus.');">
+                            @csrf @method('DELETE')
+                            <button class="text-rose-600 text-xs hover:text-rose-800">Hapus</button>
+                        </form>
+                    </td>
                 </tr>
             @empty
                 <tr><td colspan="9" class="px-5 py-12 text-center text-ink/45">

@@ -13,6 +13,7 @@ use App\Http\Controllers\PppoeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServicePlanController;
 use App\Http\Controllers\SnmpController;
+use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/customers',          [CustomerController::class, 'store'])->name('customers.store');
         Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('/customers/{id}',      [CustomerController::class, 'update'])->name('customers.update');
+        Route::delete('/customers/{id}',   [CustomerController::class, 'destroy'])->name('customers.destroy');
 
         Route::get('/users-radius',          [UserManagementController::class, 'index'])->name('users.index');
         Route::get('/users-radius/{username}', [UserManagementController::class, 'show'])
@@ -103,6 +105,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/hotspot/create',  [HotspotController::class, 'create'])->name('hotspot.create');
         Route::post('/hotspot',        [HotspotController::class, 'store'])->name('hotspot.store');
         Route::delete('/hotspot/{id}', [HotspotController::class, 'destroy'])->name('hotspot.destroy');
+
+        /* Voucher Hotspot (sourced from FreeRADIUS Hotspot* / HS_* groups) */
+        Route::get('/vouchers',                       [VoucherController::class, 'index'])->name('vouchers.index');
+        Route::post('/vouchers/bulk-expired',         [VoucherController::class, 'bulkDeleteExpired'])->name('vouchers.bulk-expired');
+        Route::delete('/vouchers/{username}',         [VoucherController::class, 'destroy'])
+            ->where('username', '.*')->name('vouchers.destroy');
 
         /* Mikrotik */
         Route::get('/mikrotik',                       [MikrotikController::class, 'index'])->name('mikrotik.index');

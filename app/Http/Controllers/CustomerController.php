@@ -39,6 +39,7 @@ class CustomerController extends Controller
             'devices'     => DeviceMikrotik::where('is_active', true)->get(),
             'plans'       => ServicePlan::where('is_active', true)->orderBy('name')->get(),
             'suggestCode' => $this->nextCustomerCode(),
+            'radiusGroups'=> $this->safeRadiusGroups(),
         ]);
     }
 
@@ -149,10 +150,45 @@ class CustomerController extends Controller
     {
         $row = CustomerProfile::findOrFail($id);
         return view('customers.edit', [
-            'row'     => $row,
-            'devices' => DeviceMikrotik::where('is_active', true)->get(),
-            'plans'   => ServicePlan::where('is_active', true)->orderBy('name')->get(),
+            'row'         => $row,
+            'devices'     => DeviceMikrotik::where('is_active', true)->get(),
+            'plans'       => ServicePlan::where('is_active', true)->orderBy('name')->get(),
+            'radiusGroups'=> $this->safeRadiusGroups(),
         ]);
+    }
+
+    /**
+     * Hard delete pelanggan + propagate hapus ke FreeRADIUS
+     * (radcheck/radreply/radusergroup/radacct/radpostauth) supaya
+     * data di RADIUS tidak menumpuk.
+     */
+    public function destroy(int $id): RedirectResponse
+    {
+        $row = CustomerProfile::findOrFail($id);
+        $username = $row->radius_username;
+
+        if ($username) {
+            try {
+                $this->radius->deleteUser($username);
+            } catch (\Throwable $e) {
+                Log::warning("RADIUS hard-delete failed for {$username}: ".$e->getMessage());
+                return back()->with('error', "Gagal hapus user RADIUS '{$username}': {$e->getMessage()}");
+            }
+        }
+
+        $row->delete();
+        return redirect()->route('customers.index')
+            ->with('success', "Pelanggan {$row->customer_code} dihapus" . ($username ? " (RADIUS user '{$username}' juga dihapus)." : '.'));
+    }
+
+    /** Safe wrapper: kalau RADIUS DB belum konfig, kembalikan array kosong tanpa crash. */
+    protected function safeRadiusGroups(): array
+    {
+        try {
+            return $this->radius->categorizeGroups();
+        } catch (\Throwable $e) {
+            return ['home' => [], 'broadband' => [], 'bisnis' => [], 'hotspot' => [], 'other' => []];
+        }
     }
 
     public function update(Request $request, int $id): RedirectResponse

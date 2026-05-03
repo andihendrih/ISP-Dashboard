@@ -36,7 +36,23 @@
         </div>
         <div>
             <label class="text-sm font-medium">Paket / Group</label>
-            <input name="package" value="{{ old('package', $row->package) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
+            @php($groupCount = collect($radiusGroups ?? [])->flatten()->count())
+            @if($groupCount > 0)
+                <select name="package" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+                    <option value="">— Tidak di-set —</option>
+                    @foreach(['home' => 'Home', 'broadband' => 'Broadband', 'bisnis' => 'Bisnis', 'hotspot' => 'Hotspot (Voucher)', 'other' => 'Lainnya'] as $key => $label)
+                        @if(!empty($radiusGroups[$key]))
+                            <optgroup label="{{ $label }}">
+                                @foreach($radiusGroups[$key] as $g)
+                                    <option value="{{ $g }}" @selected(old('package', $row->package) === $g)>{{ $g }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endif
+                    @endforeach
+                </select>
+            @else
+                <input name="package" value="{{ old('package', $row->package) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+            @endif
         </div>
         <div>
             <label class="text-sm font-medium">Rate Limit</label>

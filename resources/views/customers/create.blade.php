@@ -116,8 +116,25 @@
             <div></div>
             <div>
                 <label class="text-sm font-medium">Paket / Group RADIUS</label>
-                <input name="package" value="{{ old('package') }}" placeholder="pppoe-default" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
-                <p class="text-xs text-ink/45 mt-1">Auto-isi dari paket layanan jika dikosongkan.</p>
+                @php($groupCount = collect($radiusGroups ?? [])->flatten()->count())
+                @if($groupCount > 0)
+                    <select name="package" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+                        <option value="">— Pilih grup RADIUS —</option>
+                        @foreach(['home' => 'Home (PPPoE Residential)', 'broadband' => 'Broadband', 'bisnis' => 'Bisnis', 'hotspot' => 'Hotspot (Voucher)', 'other' => 'Lainnya'] as $key => $label)
+                            @if(!empty($radiusGroups[$key]))
+                                <optgroup label="{{ $label }}">
+                                    @foreach($radiusGroups[$key] as $g)
+                                        <option value="{{ $g }}" @selected(old('package') === $g)>{{ $g }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-ink/45 mt-1">Daftar grup di-fetch dari <code>radgroupreply</code> FreeRADIUS. Auto-pilih dari paket layanan kalau dikosongkan.</p>
+                @else
+                    <input name="package" value="{{ old('package') }}" placeholder="Home_20M" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+                    <p class="text-xs text-amber-700 mt-1">⚠ DB RADIUS belum konek — input grup manual. Konfig <code>RADIUS_DB_*</code> di .env supaya dropdown otomatis muncul.</p>
+                @endif
             </div>
             <div>
                 <label class="text-sm font-medium">Rate Limit</label>
@@ -180,9 +197,9 @@ document.querySelector('select[name="service_plan_id"]').addEventListener('chang
     const rate = opt.getAttribute('data-rate');
     const group = opt.getAttribute('data-group');
     const rateInput = document.querySelector('input[name="rate_limit"]');
-    const packageInput = document.querySelector('input[name="package"]');
+    const packageInput = document.querySelector('[name="package"]'); // bisa <input> atau <select>
     if (rate && !rateInput.value) rateInput.value = rate;
-    if (group && !packageInput.value) packageInput.value = group;
+    if (group && packageInput && !packageInput.value) packageInput.value = group;
 });
 
 // Generate random password (10 chars, letters + digits + safe symbols)
