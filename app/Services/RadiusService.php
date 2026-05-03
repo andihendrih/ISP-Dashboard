@@ -8,6 +8,7 @@ use App\Models\Radius\Radcheck;
 use App\Models\Radius\Radgroupreply;
 use App\Models\Radius\Radreply;
 use App\Models\Radius\Radusergroup;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -129,14 +130,75 @@ class RadiusService
         ]);
     }
 
-    /** Delete a RADIUS user and all related rows. */
+    /**
+     * Hard delete a RADIUS user and ALL related rows (radcheck, radreply,
+     * radusergroup, radacct, radpostauth). Use when CRM permanently removes a
+     * customer to avoid leftover state in FreeRADIUS.
+     */
     public function deleteUser(string $username): void
     {
         DB::connection('radius')->transaction(function () use ($username) {
             Radcheck::where('username', $username)->delete();
             Radreply::where('username', $username)->delete();
             Radusergroup::where('username', $username)->delete();
+            // Clean accounting + auth log too — prevents data buildup
+            DB::connection('radius')->table('radacct')->where('username', $username)->delete();
+            DB::connection('radius')->table('radpostauth')->where('username', $username)->delete();
         });
+    }
+
+    /* ----------------------------------------------------------------- */
+    /* Group discovery (dynamic from FreeRADIUS)                         */
+    /* ----------------------------------------------------------------- */
+
+    /**
+     * Return all configured groups in `radgroupreply`, optionally excluding
+     * legacy/test groups (e.g. HS_*). Result is cached briefly per request.
+     *
+     * @return Collection<int, string>
+     */
+    public function listGroups(bool $excludeLegacy = true): Collection
+    {
+        $rows = Radgroupreply::query()
+            ->select('groupname')
+            ->distinct()
+            ->orderBy('groupname')
+            ->pluck('groupname');
+
+        if ($excludeLegacy) {
+            $rows = $rows->reject(fn ($g) => str_starts_with((string) $g, 'HS_'));
+        }
+        return $rows->values();
+    }
+
+    /**
+     * Categorize groups for UI dropdowns / billing rules.
+     *
+     * @return array{home: array, broadband: array, bisnis: array, hotspot: array, other: array}
+     */
+    public function categorizeGroups(?Collection $groups = null): array
+    {
+        $groups ??= $this->listGroups();
+        $buckets = ['home' => [], 'broadband' => [], 'bisnis' => [], 'hotspot' => [], 'other' => []];
+
+        foreach ($groups as $g) {
+            $key = match (true) {
+                str_starts_with((string) $g, 'Home_')      => 'home',
+                str_starts_with((string) $g, 'Broadband')  => 'broadband',
+                str_starts_with((string) $g, 'Bisnis')     => 'bisnis',
+                str_starts_with((string) $g, 'Hotspot')    => 'hotspot',
+                default                                    => 'other',
+            };
+            $buckets[$key][] = $g;
+        }
+        return $buckets;
+    }
+
+    /** True if a group is hotspot voucher (non-billable). */
+    public static function isVoucherGroup(?string $groupname): bool
+    {
+        if ($groupname === null || $groupname === '') return false;
+        return str_starts_with($groupname, 'Hotspot') || str_starts_with($groupname, 'HS_');
     }
 
     /** Set or clear a Mikrotik-Rate-Limit attribute for a user. */
