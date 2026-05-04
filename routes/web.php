@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GenieacsController;
 use App\Http\Controllers\HotspotController;
 use App\Http\Controllers\InvoiceController;
@@ -92,6 +93,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/plans/{plan}/edit',  [ServicePlanController::class, 'edit'])->name('plans.edit');
         Route::put('/plans/{plan}',       [ServicePlanController::class, 'update'])->name('plans.update');
         Route::delete('/plans/{plan}',    [ServicePlanController::class, 'destroy'])->name('plans.destroy');
+    });
+
+    /* Inventory perangkat (ONU / Router / dst) */
+    Route::middleware('role:admin,noc')->group(function () {
+        Route::get('/devices',                    [DeviceController::class, 'index'])->name('devices.index');
+        Route::get('/devices/create',             [DeviceController::class, 'create'])->name('devices.create');
+        Route::post('/devices',                   [DeviceController::class, 'store'])->name('devices.store');
+        Route::get('/devices/{device}',           [DeviceController::class, 'show'])->name('devices.show');
+        Route::get('/devices/{device}/edit',      [DeviceController::class, 'edit'])->name('devices.edit');
+        Route::put('/devices/{device}',           [DeviceController::class, 'update'])->name('devices.update');
+        Route::delete('/devices/{device}',        [DeviceController::class, 'destroy'])->name('devices.destroy');
+        Route::post('/devices/{device}/assign',     [DeviceController::class, 'assign'])->name('devices.assign');
+        Route::post('/devices/{device}/transition', [DeviceController::class, 'transition'])->name('devices.transition');
     });
 
     /* PPPoE */

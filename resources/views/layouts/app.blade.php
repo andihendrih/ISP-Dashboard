@@ -174,6 +174,12 @@
                     Voucher
                 </a>
 
+                <div class="nav-section">Inventory</div>
+                <a href="{{ route('devices.index') }}" class="nav-item {{ request()->routeIs('devices.*') ? 'active' : '' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    Perangkat
+                </a>
+
                 <div class="nav-section">Network</div>
                 <a href="{{ route('mikrotik.index') }}" class="nav-item {{ request()->routeIs('mikrotik.*') ? 'active' : '' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2 9.5h20M2 14.5h20M5 4.5h14a3 3 0 013 3v9a3 3 0 01-3 3H5a3 3 0 01-3-3v-9a3 3 0 013-3z"/></svg>
