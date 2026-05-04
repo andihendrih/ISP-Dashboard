@@ -9,10 +9,12 @@
     $wifi24  = $params['wifi_24'] ?? [];
     $wifi5g  = $params['wifi_5g'] ?? [];
     $rxPower = $params['rx_power'] ?? null;
+    $uptime  = $params['uptime'] ?? null;
     $tags    = $device->tagsList();
     $isOnline = $device->status === 'online';
     $registeredAt = $params['registered_at'] ?? null;
     $lastInform = $device->last_inform_at;
+    $mgmtIp = $wanIp['external_ip'] ?? null;
 @endphp
 
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -34,6 +36,13 @@
         </div>
     </div>
     <div class="flex flex-wrap gap-2">
+        @if($mgmtIp)
+            <a href="http://{{ $mgmtIp }}" target="_blank" rel="noopener"
+               class="px-3 py-1.5 border border-blue-200 bg-blue-50 text-blue-700 rounded-xl text-xs font-medium hover:bg-blue-100 inline-flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                Remote Web
+            </a>
+        @endif
         <form method="POST" action="{{ route('genieacs.refresh', $device) }}" class="inline">
             @csrf
             <button class="px-3 py-1.5 border border-ink/10 bg-white rounded-xl text-xs font-medium hover:bg-cream-card/40 inline-flex items-center gap-1">
@@ -102,6 +111,10 @@
                     <dt class="text-ink/55">Registered</dt>
                     <dd class="text-xs">{{ $registeredAt ? \Carbon\Carbon::parse($registeredAt)->diffForHumans() : '—' }}</dd>
                 </div>
+                <div class="flex justify-between gap-3 border-b border-cream-deep/60 py-1.5">
+                    <dt class="text-ink/55">Uptime</dt>
+                    <dd class="text-xs font-mono">{{ $uptime ?: '—' }}</dd>
+                </div>
                 <div class="flex justify-between gap-3 sm:col-span-2 py-1.5 mt-1">
                     <dt class="text-ink/55 font-semibold">Redaman (RX)</dt>
                     <dd>
@@ -129,7 +142,8 @@
             @if(!empty($pppoe))
                 <form method="POST" action="{{ route('genieacs.pppoe', $device) }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     @csrf
-                    <input type="hidden" name="wan_path" value="{{ $pppoe['path'] ?? '' }}">
+                    <input type="hidden" name="username_path" value="{{ $pppoe['username_path'] ?? '' }}">
+                    <input type="hidden" name="password_path" value="{{ $pppoe['password_path'] ?? '' }}">
                     <div>
                         <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Service Type</label>
                         <input value="{{ $pppoe['service_type'] ?? 'INTERNET' }}" disabled
@@ -168,7 +182,9 @@
             @if(!empty($wanIp))
                 <form method="POST" action="{{ route('genieacs.wan-ip', $device) }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     @csrf
-                    <input type="hidden" name="wan_path" value="{{ $wanIp['path'] ?? '' }}">
+                    <input type="hidden" name="ip_path" value="{{ $wanIp['ip_path'] ?? '' }}">
+                    <input type="hidden" name="subnet_path" value="{{ $wanIp['subnet_path'] ?? '' }}">
+                    <input type="hidden" name="gateway_path" value="{{ $wanIp['gateway_path'] ?? '' }}">
                     <div>
                         <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Service Type</label>
                         <input value="{{ $wanIp['service_type'] ?? 'INTERNET' }}" disabled
@@ -225,7 +241,7 @@
                     @if(!empty($wifi24))
                         <form method="POST" action="{{ route('genieacs.ssid', $device) }}" class="space-y-2 mb-3">
                             @csrf
-                            <input type="hidden" name="wlan_path" value="{{ $wifi24['path'] ?? '' }}">
+                            <input type="hidden" name="ssid_path" value="{{ $wifi24['ssid_path'] ?? '' }}">
                             <div>
                                 <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">SSID</label>
                                 <div class="flex gap-1 mt-1">
@@ -237,7 +253,7 @@
                         </form>
                         <form method="POST" action="{{ route('genieacs.password', $device) }}" class="space-y-2 mb-3">
                             @csrf
-                            <input type="hidden" name="wlan_path" value="{{ $wifi24['path'] ?? '' }}">
+                            <input type="hidden" name="password_path" value="{{ $wifi24['password_path'] ?? '' }}">
                             <div>
                                 <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Password</label>
                                 <div class="flex gap-1 mt-1">
@@ -266,7 +282,7 @@
                     @if(!empty($wifi5g))
                         <form method="POST" action="{{ route('genieacs.ssid', $device) }}" class="space-y-2 mb-3">
                             @csrf
-                            <input type="hidden" name="wlan_path" value="{{ $wifi5g['path'] ?? '' }}">
+                            <input type="hidden" name="ssid_path" value="{{ $wifi5g['ssid_path'] ?? '' }}">
                             <div>
                                 <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">SSID</label>
                                 <div class="flex gap-1 mt-1">
@@ -278,7 +294,7 @@
                         </form>
                         <form method="POST" action="{{ route('genieacs.password', $device) }}" class="space-y-2 mb-3">
                             @csrf
-                            <input type="hidden" name="wlan_path" value="{{ $wifi5g['path'] ?? '' }}">
+                            <input type="hidden" name="password_path" value="{{ $wifi5g['password_path'] ?? '' }}">
                             <div>
                                 <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Password</label>
                                 <div class="flex gap-1 mt-1">
@@ -312,10 +328,10 @@
                     </button>
                 </form>
 
-                @if(!empty($pppoe['path']))
+                @if(!empty($pppoe['enable_path']))
                     <form method="POST" action="{{ route('genieacs.suspend-wan', $device) }}" onsubmit="return confirm('{{ !empty($pppoe['enable']) ? 'Suspend' : 'Aktifkan' }} WAN?');">
                         @csrf
-                        <input type="hidden" name="wan_path" value="{{ $pppoe['path'] }}">
+                        <input type="hidden" name="enable_path" value="{{ $pppoe['enable_path'] }}">
                         <input type="hidden" name="enable" value="{{ !empty($pppoe['enable']) ? '0' : '1' }}">
                         <button class="w-full px-4 py-2.5 {{ !empty($pppoe['enable']) ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700' : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700' }} border rounded-xl text-sm font-medium inline-flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636"/></svg>

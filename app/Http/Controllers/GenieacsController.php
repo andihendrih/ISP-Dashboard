@@ -136,11 +136,11 @@ class GenieacsController extends Controller
     public function setSsid(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'ssid' => ['required', 'string', 'max:64'],
-            'wlan_path' => ['nullable', 'string'],
+            'ssid'      => ['required', 'string', 'max:64'],
+            'ssid_path' => ['nullable', 'string'],
         ]);
         try {
-            $this->genieacs->setSsid($device->device_id, $data['ssid'], $data['wlan_path'] ?? null);
+            $this->genieacs->setSsid($device->device_id, $data['ssid'], $data['ssid_path'] ?? null);
             return back()->with('success', "SSID di-set ke '{$data['ssid']}'.");
         } catch (\Throwable $e) {
             return back()->with('error', 'Set SSID gagal: ' . $e->getMessage());
@@ -150,11 +150,11 @@ class GenieacsController extends Controller
     public function setPassword(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'password' => ['required', 'string', 'min:8', 'max:64'],
-            'wlan_path' => ['nullable', 'string'],
+            'password'      => ['required', 'string', 'min:8', 'max:64'],
+            'password_path' => ['nullable', 'string'],
         ]);
         try {
-            $this->genieacs->setWifiPassword($device->device_id, $data['password'], $data['wlan_path'] ?? null);
+            $this->genieacs->setWifiPassword($device->device_id, $data['password'], $data['password_path'] ?? null);
             return back()->with('success', 'Password WiFi di-update.');
         } catch (\Throwable $e) {
             return back()->with('error', 'Set password gagal: ' . $e->getMessage());
@@ -164,13 +164,14 @@ class GenieacsController extends Controller
     public function setPppoe(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'wan_path' => ['required', 'string'],
-            'username' => ['required', 'string', 'max:128'],
-            'password' => ['required', 'string', 'max:128'],
+            'username_path' => ['required', 'string'],
+            'password_path' => ['required', 'string'],
+            'username'      => ['required', 'string', 'max:128'],
+            'password'      => ['required', 'string', 'max:128'],
         ]);
         try {
             $this->genieacs->setPppoeCredentials(
-                $device->device_id, $data['wan_path'],
+                $device->device_id, $data['username_path'], $data['password_path'],
                 $data['username'], $data['password']
             );
             return back()->with('success', 'Kredensial PPPoE di-update.');
@@ -182,14 +183,17 @@ class GenieacsController extends Controller
     public function setWanIp(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'wan_path'    => ['required', 'string'],
-            'external_ip' => ['required', 'ip'],
-            'subnet_mask' => ['required', 'ip'],
-            'gateway'     => ['required', 'ip'],
+            'ip_path'      => ['required', 'string'],
+            'subnet_path'  => ['required', 'string'],
+            'gateway_path' => ['required', 'string'],
+            'external_ip'  => ['required', 'ip'],
+            'subnet_mask'  => ['required', 'ip'],
+            'gateway'      => ['required', 'ip'],
         ]);
         try {
             $this->genieacs->setWanIp(
-                $device->device_id, $data['wan_path'],
+                $device->device_id,
+                $data['ip_path'], $data['subnet_path'], $data['gateway_path'],
                 $data['external_ip'], $data['subnet_mask'], $data['gateway']
             );
             return back()->with('success', 'WAN IP di-update.');
@@ -201,11 +205,11 @@ class GenieacsController extends Controller
     public function suspendWan(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'wan_path' => ['required', 'string'],
-            'enable'   => ['required', 'boolean'],
+            'enable_path' => ['required', 'string'],
+            'enable'      => ['required', 'boolean'],
         ]);
         try {
-            $this->genieacs->setWanEnable($device->device_id, $data['wan_path'], (bool) $data['enable']);
+            $this->genieacs->setWanEnable($device->device_id, $data['enable_path'], (bool) $data['enable']);
             $action = $data['enable'] ? 'di-aktifkan' : 'di-suspend';
             return back()->with('success', "WAN {$action}.");
         } catch (\Throwable $e) {

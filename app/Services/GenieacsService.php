@@ -116,75 +116,97 @@ class GenieacsService
         return $this->postTask($deviceId, ['name' => 'reboot']);
     }
 
-    public function setSsid(string $deviceId, string $ssid, ?string $wlanPath = null): Response
+    /**
+     * Generic setParameterValues task. $params is an array of
+     * [path, value, type] tuples (type defaults to xsd:string).
+     */
+    public function setParameters(string $deviceId, array $params): Response
     {
-        $base = $wlanPath ?: 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1';
+        $values = [];
+        foreach ($params as $row) {
+            [$path, $value] = [$row[0], $row[1]];
+            $type = $row[2] ?? (is_bool($value) ? 'xsd:boolean' : 'xsd:string');
+            // Filter null/empty paths to avoid GenieACS validation errors
+            if ($path === null || $path === '') continue;
+            $values[] = [$path, $value, $type];
+        }
+        if (empty($values)) {
+            throw new \InvalidArgumentException('No parameters to set.');
+        }
         return $this->postTask($deviceId, [
-            'name'             => 'setParameterValues',
-            'parameterValues'  => [
-                ["{$base}.SSID", $ssid, 'xsd:string'],
-            ],
+            'name'            => 'setParameterValues',
+            'parameterValues' => $values,
         ]);
     }
 
-    public function setWifiPassword(string $deviceId, string $password, ?string $wlanPath = null): Response
+    public function setParameter(string $deviceId, string $path, $value, ?string $type = null): Response
     {
-        $base = $wlanPath ?: 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1';
-        return $this->postTask($deviceId, [
-            'name'            => 'setParameterValues',
-            'parameterValues' => [
-                ["{$base}.PreSharedKey.1.KeyPassphrase", $password, 'xsd:string'],
-                ["{$base}.PreSharedKey.1.PreSharedKey", $password, 'xsd:string'],
-                ["{$base}.KeyPassphrase", $password, 'xsd:string'],
-            ],
+        return $this->setParameters($deviceId, [[$path, $value, $type]]);
+    }
+
+    public function setSsid(string $deviceId, string $ssid, ?string $ssidPath = null): Response
+    {
+        $path = $ssidPath ?: 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID';
+        return $this->setParameter($deviceId, $path, $ssid);
+    }
+
+    /**
+     * Set WiFi password. The exact parameter path varies by product family
+     * (Huawei HG/EG/HS use PreSharedKey.1.KeyPassphrase, others use
+     * KeyPassphrase) — caller passes the resolved path from extractor.
+     */
+    public function setWifiPassword(string $deviceId, string $password, ?string $passwordPath = null): Response
+    {
+        if ($passwordPath) {
+            return $this->setParameter($deviceId, $passwordPath, $password);
+        }
+        // Compatibility fallback: write to common Huawei + standard paths
+        $base = 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1';
+        return $this->setParameters($deviceId, [
+            ["{$base}.PreSharedKey.1.KeyPassphrase", $password, 'xsd:string'],
+            ["{$base}.KeyPassphrase", $password, 'xsd:string'],
         ]);
     }
 
-    /** Set PPPoE credentials on a specific WAN connection path. */
-    public function setPppoeCredentials(string $deviceId, string $base, string $username, string $password): Response
+    /**
+     * Set PPPoE credentials. Caller passes resolved username_path and
+     * password_path from extractor (VirtualParameters.* if user setup
+     * supports them, else TR-069 path).
+     */
+    public function setPppoeCredentials(string $deviceId, string $usernamePath, string $passwordPath, string $username, string $password): Response
     {
-        return $this->postTask($deviceId, [
-            'name'            => 'setParameterValues',
-            'parameterValues' => [
-                ["{$base}.Username", $username, 'xsd:string'],
-                ["{$base}.Password", $password, 'xsd:string'],
-            ],
+        return $this->setParameters($deviceId, [
+            [$usernamePath, $username, 'xsd:string'],
+            [$passwordPath, $password, 'xsd:string'],
         ]);
     }
 
-    /** Toggle WAN Enable on a specific connection path. */
-    public function setWanEnable(string $deviceId, string $base, bool $enable): Response
+    /** Toggle WAN PPPoE enable flag. Path is from extractor['pppoe']['enable_path']. */
+    public function setWanEnable(string $deviceId, string $enablePath, bool $enable): Response
     {
-        return $this->postTask($deviceId, [
-            'name'            => 'setParameterValues',
-            'parameterValues' => [
-                ["{$base}.Enable", $enable, 'xsd:boolean'],
-            ],
+        // VirtualParameters.WANPPPEnable expects boolean; some setups want string
+        return $this->setParameters($deviceId, [
+            [$enablePath, $enable, 'xsd:boolean'],
         ]);
     }
 
-    /** Suspend / unsuspend WAN service. */
-    public function suspendWan(string $deviceId, string $base): Response
+    public function suspendWan(string $deviceId, string $enablePath): Response
     {
-        return $this->setWanEnable($deviceId, $base, false);
+        return $this->setWanEnable($deviceId, $enablePath, false);
     }
 
-    public function enableWan(string $deviceId, string $base): Response
+    public function enableWan(string $deviceId, string $enablePath): Response
     {
-        return $this->setWanEnable($deviceId, $base, true);
+        return $this->setWanEnable($deviceId, $enablePath, true);
     }
 
-    /** Update WAN IP static config (external IP, subnet, gateway). */
-    public function setWanIp(string $deviceId, string $base, string $ip, string $subnet, string $gateway): Response
+    /** Update WAN IP static config — paths from extractor['wan_ip']. */
+    public function setWanIp(string $deviceId, string $ipPath, string $subnetPath, string $gatewayPath, string $ip, string $subnet, string $gateway): Response
     {
-        return $this->postTask($deviceId, [
-            'name'            => 'setParameterValues',
-            'parameterValues' => [
-                ["{$base}.AddressingType", 'Static', 'xsd:string'],
-                ["{$base}.ExternalIPAddress", $ip, 'xsd:string'],
-                ["{$base}.SubnetMask", $subnet, 'xsd:string'],
-                ["{$base}.DefaultGateway", $gateway, 'xsd:string'],
-            ],
+        return $this->setParameters($deviceId, [
+            [$ipPath, $ip, 'xsd:string'],
+            [$subnetPath, $subnet, 'xsd:string'],
+            [$gatewayPath, $gateway, 'xsd:string'],
         ]);
     }
 
