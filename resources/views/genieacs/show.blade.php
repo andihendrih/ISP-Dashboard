@@ -64,6 +64,9 @@
 @if(session('success'))
     <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-3 mb-4 text-sm">{{ session('success') }}</div>
 @endif
+@if(session('info'))
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-3 mb-4 text-sm">{{ session('info') }}</div>
+@endif
 @if(session('error'))
     <div class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-3 mb-4 text-sm">{{ session('error') }}</div>
 @endif
@@ -148,7 +151,7 @@
                 @endif
             </div>
             @if(!empty($pppoe))
-                <form method="POST" action="{{ route('genieacs.pppoe', $device) }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <form method="POST" action="{{ route('genieacs.pppoe', $device) }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3" onsubmit="return ahPartialSubmit(this)">
                     @csrf
                     <input type="hidden" name="username_path" value="{{ $pppoe['username_path'] ?? '' }}">
                     <input type="hidden" name="password_path" value="{{ $pppoe['password_path'] ?? '' }}">
@@ -160,18 +163,24 @@
                     </div>
                     <div>
                         <label class="text-xs text-ink/55 font-medium">Vlan ID</label>
-                        <input name="vlan" value="{{ $pppoe['vlan'] ?? '' }}" placeholder="—" inputmode="numeric" pattern="[0-9]*" {{ empty($pppoe['vlan_path']) ? 'disabled' : '' }}
+                        <input name="vlan" value="{{ $pppoe['vlan'] ?? '' }}" data-original="{{ $pppoe['vlan'] ?? '' }}" placeholder="—" inputmode="numeric" pattern="[0-9]*" {{ empty($pppoe['vlan_path']) ? 'disabled' : '' }}
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 {{ empty($pppoe['vlan_path']) ? 'bg-cream-card/40' : '' }}">
                     </div>
                     <div>
                         <label class="text-xs text-ink/55 font-medium">Username</label>
-                        <input name="username" value="{{ $pppoe['username'] ?? '' }}"
+                        <input name="username" value="{{ $pppoe['username'] ?? '' }}" data-original="{{ $pppoe['username'] ?? '' }}"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
                     <div>
                         <label class="text-xs text-ink/55 font-medium">Password</label>
-                        <input name="password" type="password" value="{{ $pppoe['password'] ?? '' }}" placeholder="••••••••"
-                               class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                        <div class="relative mt-1">
+                            <input name="password" type="password" value="{{ $pppoe['password'] ?? '' }}" data-original="{{ $pppoe['password'] ?? '' }}" placeholder="••••••••"
+                                   class="w-full border border-ink/10 rounded-xl pl-3 pr-10 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                            <button type="button" onclick="ahTogglePw(this)" tabindex="-1" class="absolute right-2 top-1/2 -translate-y-1/2 text-ink/40 hover:text-ink/80 p-1" aria-label="Show/hide password">
+                                <svg class="w-4 h-4 ah-eye-show" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="w-4 h-4 ah-eye-hide hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a19.66 19.66 0 015.06-5.94M9.9 4.24A10.93 10.93 0 0112 4c7 0 11 8 11 8a19.78 19.78 0 01-3.16 4.19M14.12 14.12a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="sm:col-span-2 flex justify-end">
                         <button class="px-3 py-1.5 bg-ink text-white rounded-xl text-xs font-medium hover:bg-ink/90 inline-flex items-center gap-1">
@@ -189,7 +198,7 @@
         <div class="bg-white rounded-3xl shadow-card p-5">
             <div class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold mb-3">WAN IP (STATIC)</div>
             @if(!empty($wanIp))
-                <form method="POST" action="{{ route('genieacs.wan-ip', $device) }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <form method="POST" action="{{ route('genieacs.wan-ip', $device) }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3" onsubmit="return ahPartialSubmit(this)">
                     @csrf
                     <input type="hidden" name="ip_path" value="{{ $wanIp['ip_path'] ?? '' }}">
                     <input type="hidden" name="subnet_path" value="{{ $wanIp['subnet_path'] ?? '' }}">
@@ -202,22 +211,22 @@
                     </div>
                     <div>
                         <label class="text-xs text-ink/55 font-medium">Vlan ID</label>
-                        <input name="vlan" value="{{ $wanIp['vlan'] ?? '' }}" placeholder="—" inputmode="numeric" pattern="[0-9]*" {{ empty($wanIp['vlan_path']) ? 'disabled' : '' }}
+                        <input name="vlan" value="{{ $wanIp['vlan'] ?? '' }}" data-original="{{ $wanIp['vlan'] ?? '' }}" placeholder="—" inputmode="numeric" pattern="[0-9]*" {{ empty($wanIp['vlan_path']) ? 'disabled' : '' }}
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 {{ empty($wanIp['vlan_path']) ? 'bg-cream-card/40' : '' }}">
                     </div>
                     <div>
                         <label class="text-xs text-ink/55 font-medium">External IP</label>
-                        <input name="external_ip" value="{{ $wanIp['external_ip'] ?? '' }}"
+                        <input name="external_ip" value="{{ $wanIp['external_ip'] ?? '' }}" data-original="{{ $wanIp['external_ip'] ?? '' }}"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
                     <div>
                         <label class="text-xs text-ink/55 font-medium">Subnet Mask</label>
-                        <input name="subnet_mask" value="{{ $wanIp['subnet_mask'] ?? '' }}"
+                        <input name="subnet_mask" value="{{ $wanIp['subnet_mask'] ?? '' }}" data-original="{{ $wanIp['subnet_mask'] ?? '' }}"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="text-xs text-ink/55 font-medium">Gateway</label>
-                        <input name="gateway" value="{{ $wanIp['gateway'] ?? '' }}"
+                        <input name="gateway" value="{{ $wanIp['gateway'] ?? '' }}" data-original="{{ $wanIp['gateway'] ?? '' }}"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
                     <div class="sm:col-span-2 flex justify-end">
@@ -267,8 +276,14 @@
                             <div>
                                 <label class="text-xs text-ink/55 font-medium">Password</label>
                                 <div class="flex gap-1 mt-1">
-                                    <input name="password" type="text" value="{{ $wifi24['password'] ?? '' }}" minlength="8"
-                                           class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                                    <div class="relative flex-1">
+                                        <input name="password" type="password" value="{{ $wifi24['password'] ?? '' }}" minlength="8"
+                                               class="w-full border border-ink/10 rounded-xl pl-3 pr-10 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                                        <button type="button" onclick="ahTogglePw(this)" tabindex="-1" class="absolute right-2 top-1/2 -translate-y-1/2 text-ink/40 hover:text-ink/80 p-1" aria-label="Show/hide password">
+                                            <svg class="w-4 h-4 ah-eye-show" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            <svg class="w-4 h-4 ah-eye-hide hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a19.66 19.66 0 015.06-5.94M9.9 4.24A10.93 10.93 0 0112 4c7 0 11 8 11 8a19.78 19.78 0 01-3.16 4.19M14.12 14.12a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                                        </button>
+                                    </div>
                                     <button class="px-3 py-2 bg-ink text-white rounded-xl text-xs hover:bg-ink/90">Set</button>
                                 </div>
                             </div>
@@ -318,8 +333,14 @@
                             <div>
                                 <label class="text-xs text-ink/55 font-medium">Password</label>
                                 <div class="flex gap-1 mt-1">
-                                    <input name="password" type="text" value="{{ $wifi5g['password'] ?? '' }}" minlength="8"
-                                           class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                                    <div class="relative flex-1">
+                                        <input name="password" type="password" value="{{ $wifi5g['password'] ?? '' }}" minlength="8"
+                                               class="w-full border border-ink/10 rounded-xl pl-3 pr-10 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
+                                        <button type="button" onclick="ahTogglePw(this)" tabindex="-1" class="absolute right-2 top-1/2 -translate-y-1/2 text-ink/40 hover:text-ink/80 p-1" aria-label="Show/hide password">
+                                            <svg class="w-4 h-4 ah-eye-show" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            <svg class="w-4 h-4 ah-eye-hide hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a19.66 19.66 0 015.06-5.94M9.9 4.24A10.93 10.93 0 0112 4c7 0 11 8 11 8a19.78 19.78 0 01-3.16 4.19M14.12 14.12a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                                        </button>
+                                    </div>
                                     <button class="px-3 py-2 bg-ink text-white rounded-xl text-xs hover:bg-ink/90">Set</button>
                                 </div>
                             </div>
@@ -432,4 +453,38 @@
         </div>
     </div>
 </div>
+
+<script>
+// Only submit fields that the user actually changed. Disabled inputs are
+// excluded from form data so the controller treats them as "skip".
+function ahPartialSubmit(form) {
+    const fields = form.querySelectorAll('input[data-original]');
+    let dirty = 0;
+    fields.forEach(el => {
+        const cur  = (el.value ?? '').trim();
+        const orig = (el.dataset.original ?? '').trim();
+        if (cur === orig) {
+            el.disabled = true;
+        } else {
+            dirty++;
+        }
+    });
+    if (dirty === 0) {
+        // Re-enable so the user can keep typing.
+        fields.forEach(el => { el.disabled = false; });
+        alert('Tidak ada field yang berubah.');
+        return false;
+    }
+    return true;
+}
+
+function ahTogglePw(btn) {
+    const input = btn.parentElement.querySelector('input');
+    if (!input) return;
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.querySelector('.ah-eye-show').classList.toggle('hidden', !showing);
+    btn.querySelector('.ah-eye-hide').classList.toggle('hidden', showing);
+}
+</script>
 @endsection

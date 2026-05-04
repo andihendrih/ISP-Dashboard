@@ -136,9 +136,12 @@ class GenieacsController extends Controller
     public function setSsid(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'ssid'      => ['required', 'string', 'max:64'],
+            'ssid'      => ['nullable', 'string', 'max:64'],
             'ssid_path' => ['nullable', 'string'],
         ]);
+        if (!$request->filled('ssid')) {
+            return back()->with('info', 'SSID kosong — tidak ada yang di-update.');
+        }
         try {
             $this->genieacs->setSsid($device->device_id, $data['ssid'], $data['ssid_path'] ?? null);
             return back()->with('success', "SSID di-set ke '{$data['ssid']}'.");
@@ -150,9 +153,12 @@ class GenieacsController extends Controller
     public function setPassword(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'password'      => ['required', 'string', 'min:8', 'max:64'],
+            'password'      => ['nullable', 'string', 'min:8', 'max:64'],
             'password_path' => ['nullable', 'string'],
         ]);
+        if (!$request->filled('password')) {
+            return back()->with('info', 'Password kosong — tidak ada yang di-update.');
+        }
         try {
             $this->genieacs->setWifiPassword($device->device_id, $data['password'], $data['password_path'] ?? null);
             return back()->with('success', 'Password WiFi di-update.');
@@ -164,23 +170,30 @@ class GenieacsController extends Controller
     public function setPppoe(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'username_path' => ['required', 'string'],
-            'password_path' => ['required', 'string'],
-            'username'      => ['required', 'string', 'max:128'],
-            'password'      => ['required', 'string', 'max:128'],
+            'username_path' => ['nullable', 'string'],
+            'password_path' => ['nullable', 'string'],
             'vlan_path'     => ['nullable', 'string'],
+            'username'      => ['nullable', 'string', 'max:128'],
+            'password'      => ['nullable', 'string', 'max:128'],
             'vlan'          => ['nullable', 'integer', 'between:0,4094'],
         ]);
         try {
-            $params = [
-                [$data['username_path'], $data['username'], 'xsd:string'],
-                [$data['password_path'], $data['password'], 'xsd:string'],
-            ];
-            if (!empty($data['vlan_path']) && $data['vlan'] !== null && $data['vlan'] !== '') {
+            $params = [];
+            if ($request->filled('username') && !empty($data['username_path'])) {
+                $params[] = [$data['username_path'], $data['username'], 'xsd:string'];
+            }
+            if ($request->filled('password') && !empty($data['password_path'])) {
+                $params[] = [$data['password_path'], $data['password'], 'xsd:string'];
+            }
+            if ($request->filled('vlan') && !empty($data['vlan_path'])) {
                 $params[] = [$data['vlan_path'], (int) $data['vlan'], 'xsd:unsignedInt'];
             }
+            if (empty($params)) {
+                return back()->with('info', 'Tidak ada field yang berubah.');
+            }
             $this->genieacs->setParameters($device->device_id, $params);
-            return back()->with('success', 'PPPoE di-update.');
+            $changed = array_map(fn($p) => $this->fieldLabel($p[0]), $params);
+            return back()->with('success', 'PPPoE di-update: ' . implode(', ', $changed));
         } catch (\Throwable $e) {
             return back()->with('error', 'Set PPPoE gagal: ' . $e->getMessage());
         }
@@ -189,29 +202,51 @@ class GenieacsController extends Controller
     public function setWanIp(Request $request, GenieacsDevice $device): RedirectResponse
     {
         $data = $request->validate([
-            'ip_path'      => ['required', 'string'],
-            'subnet_path'  => ['required', 'string'],
-            'gateway_path' => ['required', 'string'],
-            'external_ip'  => ['required', 'ip'],
-            'subnet_mask'  => ['required', 'ip'],
-            'gateway'      => ['required', 'ip'],
+            'ip_path'      => ['nullable', 'string'],
+            'subnet_path'  => ['nullable', 'string'],
+            'gateway_path' => ['nullable', 'string'],
             'vlan_path'    => ['nullable', 'string'],
+            'external_ip'  => ['nullable', 'ip'],
+            'subnet_mask'  => ['nullable', 'ip'],
+            'gateway'      => ['nullable', 'ip'],
             'vlan'         => ['nullable', 'integer', 'between:0,4094'],
         ]);
         try {
-            $params = [
-                [$data['ip_path'],      $data['external_ip'], 'xsd:string'],
-                [$data['subnet_path'],  $data['subnet_mask'], 'xsd:string'],
-                [$data['gateway_path'], $data['gateway'],     'xsd:string'],
-            ];
-            if (!empty($data['vlan_path']) && $data['vlan'] !== null && $data['vlan'] !== '') {
+            $params = [];
+            if ($request->filled('external_ip') && !empty($data['ip_path'])) {
+                $params[] = [$data['ip_path'], $data['external_ip'], 'xsd:string'];
+            }
+            if ($request->filled('subnet_mask') && !empty($data['subnet_path'])) {
+                $params[] = [$data['subnet_path'], $data['subnet_mask'], 'xsd:string'];
+            }
+            if ($request->filled('gateway') && !empty($data['gateway_path'])) {
+                $params[] = [$data['gateway_path'], $data['gateway'], 'xsd:string'];
+            }
+            if ($request->filled('vlan') && !empty($data['vlan_path'])) {
                 $params[] = [$data['vlan_path'], (int) $data['vlan'], 'xsd:unsignedInt'];
             }
+            if (empty($params)) {
+                return back()->with('info', 'Tidak ada field yang berubah.');
+            }
             $this->genieacs->setParameters($device->device_id, $params);
-            return back()->with('success', 'WAN IP di-update.');
+            $changed = array_map(fn($p) => $this->fieldLabel($p[0]), $params);
+            return back()->with('success', 'WAN IP di-update: ' . implode(', ', $changed));
         } catch (\Throwable $e) {
             return back()->with('error', 'Set WAN IP gagal: ' . $e->getMessage());
         }
+    }
+
+    private function fieldLabel(string $path): string
+    {
+        $map = [
+            'PPPoEUsername' => 'Username', 'PPPoEPassword' => 'Password',
+            'WANPPPVlanID'  => 'VLAN', 'VLANIDTR' => 'VLAN',
+            'MGMTIP' => 'External IP', 'MGMTMASK' => 'Subnet', 'MGMTGW' => 'Gateway',
+        ];
+        foreach ($map as $needle => $label) {
+            if (str_contains($path, $needle)) return $label;
+        }
+        return basename(str_replace('.', '/', $path));
     }
 
     public function suspendWan(Request $request, GenieacsDevice $device): RedirectResponse
