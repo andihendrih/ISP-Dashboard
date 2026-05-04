@@ -42,4 +42,9 @@ class CustomerProfile extends Model
     {
         return $this->hasMany(Invoice::class, 'customer_profile_id');
     }
+
+    public function user(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(User::class, 'customer_profile_id');
+    }
 }

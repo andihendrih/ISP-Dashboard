@@ -1,0 +1,62 @@
+@extends('layouts.app')
+@section('title','Tambah User')
+@section('breadcrumb','Pengaturan / Pengguna / Tambah')
+
+@section('content')
+<div class="mb-4">
+    <h1 class="text-xl sm:text-2xl font-bold">Tambah User</h1>
+    <p class="text-sm text-ink/55">Buat akun staff baru (superadmin/admin/finance/teknisi/noc).</p>
+</div>
+
+@if($errors->any())
+    <div class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-3 mb-4 text-sm">
+        <ul class="list-disc pl-5">
+            @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+        </ul>
+    </div>
+@endif
+@if(session('error'))
+    <div class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-3 mb-4 text-sm">{{ session('error') }}</div>
+@endif
+
+<form method="POST" action="{{ route('settings.users.store') }}" class="bg-white rounded-3xl shadow-card p-5 max-w-2xl space-y-4">
+    @csrf
+
+    <div>
+        <label class="block text-xs text-ink/55 font-medium mb-1">Nama</label>
+        <input type="text" name="name" value="{{ old('name') }}" required class="w-full border border-ink/10 rounded-xl text-sm px-3 py-2">
+    </div>
+
+    <div>
+        <label class="block text-xs text-ink/55 font-medium mb-1">Email</label>
+        <input type="email" name="email" value="{{ old('email') }}" required class="w-full border border-ink/10 rounded-xl text-sm px-3 py-2">
+    </div>
+
+    <div>
+        <label class="block text-xs text-ink/55 font-medium mb-1">Role</label>
+        <select name="role_id" required class="w-full border border-ink/10 rounded-xl text-sm px-3 py-2 bg-white">
+            <option value="">— Pilih Role —</option>
+            @foreach($roles as $r)
+                <option value="{{ $r->id }}" @selected(old('role_id') == $r->id)>{{ $r->label }} ({{ $r->name }})</option>
+            @endforeach
+        </select>
+    </div>
+
+    <div>
+        <label class="block text-xs text-ink/55 font-medium mb-1">Password (opsional)</label>
+        <input type="text" name="password" placeholder="Kosongkan untuk auto-generate" class="w-full border border-ink/10 rounded-xl text-sm px-3 py-2">
+        <p class="text-xs text-ink/45 mt-1">Kalau kosong, password 10-char acak akan dibuat & ditampilkan setelah simpan.</p>
+    </div>
+
+    <label class="inline-flex items-center gap-2">
+        <input type="hidden" name="is_active" value="0">
+        <input type="checkbox" name="is_active" value="1" {{ old('is_active', '1') ? 'checked' : '' }}>
+        <span class="text-sm">Aktif</span>
+    </label>
+
+    <div class="flex gap-2 pt-2">
+        <button class="px-4 py-2 bg-ink text-white rounded-xl text-sm">Simpan</button>
+        <a href="{{ route('settings.users.index') }}" class="px-4 py-2 rounded-xl text-sm text-ink/60 hover:bg-cream-deep/60">Batal</a>
+    </div>
+</form>
+@endsection

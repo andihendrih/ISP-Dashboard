@@ -18,6 +18,7 @@ use App\Http\Controllers\SnmpController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\Settings\UserController as SettingsUserController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -174,4 +175,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/genieacs/{device}/wifi-security',  [GenieacsController::class, 'setWifiSecurity'])->name('genieacs.wifi-security');
     });
 
+    /* Pengaturan — User Management (superadmin/admin only) */
+    Route::middleware('role:superadmin,admin')->prefix('settings')->name('settings.')->group(function () {
+        Route::get('/users',                  [SettingsUserController::class, 'index'])->name('users.index');
+        Route::get('/users/create',           [SettingsUserController::class, 'create'])->name('users.create');
+        Route::post('/users',                 [SettingsUserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit',      [SettingsUserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}',           [SettingsUserController::class, 'update'])->name('users.update');
+        Route::post('/users/{user}/reset',    [SettingsUserController::class, 'resetPassword'])->name('users.reset');
+        Route::post('/users/{user}/toggle',   [SettingsUserController::class, 'toggleActive'])->name('users.toggle');
+        Route::delete('/users/{user}',        [SettingsUserController::class, 'destroy'])->name('users.destroy');
+    });
 });
