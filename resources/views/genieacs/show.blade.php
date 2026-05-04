@@ -140,7 +140,7 @@
         {{-- WAN PPPOE --}}
         <div class="bg-white rounded-3xl shadow-card p-5">
             <div class="flex items-center justify-between mb-3">
-                <div class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">WAN PPPOE</div>
+                <div class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">WAN PPPoE</div>
                 @if(!empty($pppoe['enable']))
                     <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">WAN Enable</span>
                 @else
@@ -152,23 +152,24 @@
                     @csrf
                     <input type="hidden" name="username_path" value="{{ $pppoe['username_path'] ?? '' }}">
                     <input type="hidden" name="password_path" value="{{ $pppoe['password_path'] ?? '' }}">
+                    <input type="hidden" name="vlan_path" value="{{ $pppoe['vlan_path'] ?? '' }}">
                     <div>
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Service Type</label>
+                        <label class="text-xs text-ink/55 font-medium">Service Type</label>
                         <input value="{{ $pppoe['service_type'] ?? 'INTERNET' }}" disabled
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm bg-cream-card/40">
                     </div>
                     <div>
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">VLAN ID</label>
-                        <input value="{{ $pppoe['vlan'] ?? '' }}" disabled placeholder="—"
-                               class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono bg-cream-card/40">
+                        <label class="text-xs text-ink/55 font-medium">Vlan ID</label>
+                        <input name="vlan" value="{{ $pppoe['vlan'] ?? '' }}" placeholder="—" inputmode="numeric" pattern="[0-9]*" {{ empty($pppoe['vlan_path']) ? 'disabled' : '' }}
+                               class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 {{ empty($pppoe['vlan_path']) ? 'bg-cream-card/40' : '' }}">
                     </div>
                     <div>
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Username</label>
+                        <label class="text-xs text-ink/55 font-medium">Username</label>
                         <input name="username" value="{{ $pppoe['username'] ?? '' }}"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
                     <div>
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Password</label>
+                        <label class="text-xs text-ink/55 font-medium">Password</label>
                         <input name="password" type="password" value="{{ $pppoe['password'] ?? '' }}" placeholder="••••••••"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
@@ -193,28 +194,29 @@
                     <input type="hidden" name="ip_path" value="{{ $wanIp['ip_path'] ?? '' }}">
                     <input type="hidden" name="subnet_path" value="{{ $wanIp['subnet_path'] ?? '' }}">
                     <input type="hidden" name="gateway_path" value="{{ $wanIp['gateway_path'] ?? '' }}">
+                    <input type="hidden" name="vlan_path" value="{{ $wanIp['vlan_path'] ?? '' }}">
                     <div>
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Service Type</label>
+                        <label class="text-xs text-ink/55 font-medium">Service Type</label>
                         <input value="{{ $wanIp['service_type'] ?? 'INTERNET' }}" disabled
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm bg-cream-card/40">
                     </div>
                     <div>
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">VLAN ID</label>
-                        <input value="{{ $wanIp['vlan'] ?? '' }}" disabled placeholder="—"
-                               class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono bg-cream-card/40">
+                        <label class="text-xs text-ink/55 font-medium">Vlan ID</label>
+                        <input name="vlan" value="{{ $wanIp['vlan'] ?? '' }}" placeholder="—" inputmode="numeric" pattern="[0-9]*" {{ empty($wanIp['vlan_path']) ? 'disabled' : '' }}
+                               class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 {{ empty($wanIp['vlan_path']) ? 'bg-cream-card/40' : '' }}">
                     </div>
                     <div>
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">External IP</label>
+                        <label class="text-xs text-ink/55 font-medium">External IP</label>
                         <input name="external_ip" value="{{ $wanIp['external_ip'] ?? '' }}"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
                     <div>
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Subnet Mask</label>
+                        <label class="text-xs text-ink/55 font-medium">Subnet Mask</label>
                         <input name="subnet_mask" value="{{ $wanIp['subnet_mask'] ?? '' }}"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
                     <div class="sm:col-span-2">
-                        <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Gateway</label>
+                        <label class="text-xs text-ink/55 font-medium">Gateway</label>
                         <input name="gateway" value="{{ $wanIp['gateway'] ?? '' }}"
                                class="mt-1 w-full border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
                     </div>
@@ -251,7 +253,7 @@
                             @csrf
                             <input type="hidden" name="ssid_path" value="{{ $wifi24['ssid_path'] ?? '' }}">
                             <div>
-                                <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">SSID</label>
+                                <label class="text-xs text-ink/55 font-medium">SSID</label>
                                 <div class="flex gap-1 mt-1">
                                     <input name="ssid" value="{{ $wifi24['ssid'] ?? '' }}"
                                            class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
@@ -263,7 +265,7 @@
                             @csrf
                             <input type="hidden" name="password_path" value="{{ $wifi24['password_path'] ?? '' }}">
                             <div>
-                                <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Password</label>
+                                <label class="text-xs text-ink/55 font-medium">Password</label>
                                 <div class="flex gap-1 mt-1">
                                     <input name="password" type="text" value="{{ $wifi24['password'] ?? '' }}" minlength="8"
                                            class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
@@ -274,7 +276,7 @@
                         <form method="POST" action="{{ route('genieacs.wifi-security', $device) }}" class="space-y-2">
                             @csrf
                             <input type="hidden" name="security_path" value="{{ $wifi24['security_path'] ?? '' }}">
-                            <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Security</label>
+                            <label class="text-xs text-ink/55 font-medium">Security</label>
                             <div class="flex gap-1 mt-1">
                                 <select name="security" class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm bg-white">
                                     @foreach($secOptions as $val => $lbl)
@@ -302,7 +304,7 @@
                             @csrf
                             <input type="hidden" name="ssid_path" value="{{ $wifi5g['ssid_path'] ?? '' }}">
                             <div>
-                                <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">SSID</label>
+                                <label class="text-xs text-ink/55 font-medium">SSID</label>
                                 <div class="flex gap-1 mt-1">
                                     <input name="ssid" value="{{ $wifi5g['ssid'] ?? '' }}"
                                            class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
@@ -314,7 +316,7 @@
                             @csrf
                             <input type="hidden" name="password_path" value="{{ $wifi5g['password_path'] ?? '' }}">
                             <div>
-                                <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Password</label>
+                                <label class="text-xs text-ink/55 font-medium">Password</label>
                                 <div class="flex gap-1 mt-1">
                                     <input name="password" type="text" value="{{ $wifi5g['password'] ?? '' }}" minlength="8"
                                            class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100">
@@ -325,7 +327,7 @@
                         <form method="POST" action="{{ route('genieacs.wifi-security', $device) }}" class="space-y-2">
                             @csrf
                             <input type="hidden" name="security_path" value="{{ $wifi5g['security_path'] ?? '' }}">
-                            <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Security</label>
+                            <label class="text-xs text-ink/55 font-medium">Security</label>
                             <div class="flex gap-1 mt-1">
                                 <select name="security" class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm bg-white">
                                     @foreach($secOptions as $val => $lbl)

@@ -168,13 +168,19 @@ class GenieacsController extends Controller
             'password_path' => ['required', 'string'],
             'username'      => ['required', 'string', 'max:128'],
             'password'      => ['required', 'string', 'max:128'],
+            'vlan_path'     => ['nullable', 'string'],
+            'vlan'          => ['nullable', 'integer', 'between:0,4094'],
         ]);
         try {
-            $this->genieacs->setPppoeCredentials(
-                $device->device_id, $data['username_path'], $data['password_path'],
-                $data['username'], $data['password']
-            );
-            return back()->with('success', 'Kredensial PPPoE di-update.');
+            $params = [
+                [$data['username_path'], $data['username'], 'xsd:string'],
+                [$data['password_path'], $data['password'], 'xsd:string'],
+            ];
+            if (!empty($data['vlan_path']) && $data['vlan'] !== null && $data['vlan'] !== '') {
+                $params[] = [$data['vlan_path'], (int) $data['vlan'], 'xsd:unsignedInt'];
+            }
+            $this->genieacs->setParameters($device->device_id, $params);
+            return back()->with('success', 'PPPoE di-update.');
         } catch (\Throwable $e) {
             return back()->with('error', 'Set PPPoE gagal: ' . $e->getMessage());
         }
@@ -189,13 +195,19 @@ class GenieacsController extends Controller
             'external_ip'  => ['required', 'ip'],
             'subnet_mask'  => ['required', 'ip'],
             'gateway'      => ['required', 'ip'],
+            'vlan_path'    => ['nullable', 'string'],
+            'vlan'         => ['nullable', 'integer', 'between:0,4094'],
         ]);
         try {
-            $this->genieacs->setWanIp(
-                $device->device_id,
-                $data['ip_path'], $data['subnet_path'], $data['gateway_path'],
-                $data['external_ip'], $data['subnet_mask'], $data['gateway']
-            );
+            $params = [
+                [$data['ip_path'],      $data['external_ip'], 'xsd:string'],
+                [$data['subnet_path'],  $data['subnet_mask'], 'xsd:string'],
+                [$data['gateway_path'], $data['gateway'],     'xsd:string'],
+            ];
+            if (!empty($data['vlan_path']) && $data['vlan'] !== null && $data['vlan'] !== '') {
+                $params[] = [$data['vlan_path'], (int) $data['vlan'], 'xsd:unsignedInt'];
+            }
+            $this->genieacs->setParameters($device->device_id, $params);
             return back()->with('success', 'WAN IP di-update.');
         } catch (\Throwable $e) {
             return back()->with('error', 'Set WAN IP gagal: ' . $e->getMessage());
