@@ -147,7 +147,6 @@
                             </svg>
                         </span>
                         <input type="email" name="email" required autofocus value="{{ old('email') }}"
-                            placeholder="admin@ahnet.local"
                             class="w-full rounded-2xl border border-ink/10 bg-cream-card/60 focus:bg-white focus:border-accent focus:ring-2 focus:ring-accent/30 pl-10 pr-4 py-3 outline-none transition text-sm">
                     </div>
                 </div>
@@ -164,7 +163,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-7a2 2 0 00-2-2H6a2 2 0 00-2 2v7a2 2 0 002 2zM8 11V7a4 4 0 118 0v4"/>
                             </svg>
                         </span>
-                        <input id="ah-pw" type="password" name="password" required placeholder="••••••••"
+                        <input id="ah-pw" type="password" name="password" required
                             class="w-full rounded-2xl border border-ink/10 bg-cream-card/60 focus:bg-white focus:border-accent focus:ring-2 focus:ring-accent/30 pl-10 pr-11 py-3 outline-none transition text-sm">
                         <button type="button" onclick="ahTogglePw()" tabindex="-1"
                             class="absolute inset-y-0 right-3 flex items-center text-ink/40 hover:text-ink"
