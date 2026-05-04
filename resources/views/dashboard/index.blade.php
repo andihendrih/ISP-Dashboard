@@ -6,44 +6,44 @@
 <div class="space-y-5">
 
     {{-- Hero greeting + main stats --}}
-    <div class="bg-cream-card rounded-3xl p-7 relative overflow-hidden shadow-card">
+    <div class="bg-cream-card rounded-3xl p-5 sm:p-6 relative overflow-hidden shadow-card">
         <div class="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-accent/30 blur-3xl"></div>
         <div class="absolute -bottom-24 right-32 w-64 h-64 rounded-full bg-accent-soft/50 blur-3xl"></div>
 
         <div class="relative grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
             <div class="lg:col-span-2">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-ink leading-tight">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-ink leading-tight">
                     Halo, {{ explode(' ', auth()->user()->name)[0] ?? 'Admin' }} 👋
                 </h1>
-                <p class="mt-1 text-ink/55 text-sm">{{ now()->locale('id')->translatedFormat('l, d F Y') }} — selamat datang kembali.</p>
+                <p class="mt-1 text-ink/55 text-xs sm:text-sm">{{ now()->locale('id')->translatedFormat('l, d F Y') }} — selamat datang kembali.</p>
 
-                <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <a href="{{ route('customers.index') }}" class="bg-white rounded-2xl p-4 shadow-card hover:shadow-soft transition group">
+                <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                    <a href="{{ route('customers.index') }}" class="bg-white rounded-2xl p-3 shadow-card hover:shadow-soft transition group">
                         <div class="w-9 h-9 rounded-xl bg-accent/30 text-ink flex items-center justify-center mb-3">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11a4 4 0 10-8 0 4 4 0 008 0zM2 22a10 10 0 0120 0"/></svg>
                         </div>
-                        <div class="text-2xl font-extrabold">{{ number_format($totalPelanggan, 0, ',', '.') }}</div>
+                        <div class="text-xl sm:text-2xl font-extrabold">{{ number_format($totalPelanggan, 0, ',', '.') }}</div>
                         <div class="text-xs text-ink/55 font-medium mt-0.5">Total Pelanggan</div>
                     </a>
-                    <a href="{{ route('users.index') }}" class="bg-white rounded-2xl p-4 shadow-card hover:shadow-soft transition">
+                    <a href="{{ route('users.index') }}" class="bg-white rounded-2xl p-3 shadow-card hover:shadow-soft transition">
                         <div class="w-9 h-9 rounded-xl bg-accent/30 text-ink flex items-center justify-center mb-3">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/></svg>
                         </div>
-                        <div class="text-2xl font-extrabold">{{ number_format($totalLayanan, 0, ',', '.') }}</div>
+                        <div class="text-xl sm:text-2xl font-extrabold">{{ number_format($totalLayanan, 0, ',', '.') }}</div>
                         <div class="text-xs text-ink/55 font-medium mt-0.5">Total Layanan</div>
                     </a>
-                    <div class="bg-white rounded-2xl p-4 shadow-card">
+                    <div class="bg-white rounded-2xl p-3 shadow-card">
                         <div class="w-9 h-9 rounded-xl bg-accent/30 text-ink flex items-center justify-center mb-3">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                         </div>
-                        <div class="text-2xl font-extrabold">{{ number_format($pelangganBaru, 0, ',', '.') }}</div>
+                        <div class="text-xl sm:text-2xl font-extrabold">{{ number_format($pelangganBaru, 0, ',', '.') }}</div>
                         <div class="text-xs text-ink/55 font-medium mt-0.5">Pelanggan Baru</div>
                     </div>
-                    <div class="bg-ink rounded-2xl p-4 text-white shadow-card">
+                    <div class="bg-ink rounded-2xl p-3 text-white shadow-card">
                         <div class="w-9 h-9 rounded-xl bg-accent text-ink flex items-center justify-center mb-3">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zM12 15.75h.008v.008H12v-.008z"/></svg>
                         </div>
-                        <div class="text-2xl font-extrabold">{{ number_format($isolir, 0, ',', '.') }}</div>
+                        <div class="text-xl sm:text-2xl font-extrabold">{{ number_format($isolir, 0, ',', '.') }}</div>
                         <div class="text-xs text-white/60 font-medium mt-0.5">Layanan Isolir</div>
                     </div>
                 </div>
@@ -75,7 +75,7 @@
     {{-- Charts row --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-card">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div>
                     <div class="font-bold text-lg">Pelanggan Baru Tahunan</div>
                     <div class="text-xs text-ink/50 mt-0.5">Tren penambahan pelanggan per bulan</div>
@@ -98,6 +98,29 @@
             <canvas id="chartStatus" height="220"></canvas>
         </div>
     </div>
+
+    @if($billing)
+        {{-- Billing summary --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white rounded-3xl p-5 shadow-card">
+                <div class="text-xs text-ink/55 uppercase font-semibold">Total Outstanding</div>
+                <div class="text-2xl font-bold mt-1">Rp {{ number_format($billing['outstanding'], 0, ',', '.') }}</div>
+                <a href="{{ route('invoices.index') }}" class="text-xs text-ink/55 hover:text-ink mt-2 inline-block">Lihat tagihan →</a>
+            </div>
+            <div class="bg-white rounded-3xl p-5 shadow-card">
+                <div class="text-xs text-ink/55 uppercase font-semibold">Belum Lunas</div>
+                <div class="text-2xl font-bold mt-1">{{ $billing['belum_lunas_count'] }}</div>
+            </div>
+            <div class="bg-ink text-white rounded-3xl p-5 shadow-card">
+                <div class="text-xs text-white/60 uppercase font-semibold">Terlambat</div>
+                <div class="text-2xl font-bold mt-1 text-accent">{{ $billing['terlambat_count'] }}</div>
+            </div>
+            <div class="bg-white rounded-3xl p-5 shadow-card">
+                <div class="text-xs text-ink/55 uppercase font-semibold">Lunas Bulan Ini</div>
+                <div class="text-xl font-bold mt-1">Rp {{ number_format($billing['lunas_bulan_ini'], 0, ',', '.') }}</div>
+            </div>
+        </div>
+    @endif
 
     {{-- Health + recent customers --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -122,7 +145,7 @@
         </div>
 
         <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-card">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div>
                     <div class="font-bold text-lg">Pelanggan Terbaru</div>
                     <div class="text-xs text-ink/50 mt-0.5">8 pelanggan terakhir terdaftar</div>

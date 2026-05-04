@@ -59,4 +59,16 @@ return [
         'password' => env('GENIEACS_PASSWORD', ''),
         'timeout'  => (int) env('GENIEACS_TIMEOUT', 10),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Billing
+    |--------------------------------------------------------------------------
+    */
+    'billing' => [
+        // Day of month invoices are due (1-31). Default = 7.
+        'due_day'  => (int) env('BILLING_DUE_DAY', 7),
+        // Currency code shown in UI / PDF.
+        'currency' => env('BILLING_CURRENCY', 'IDR'),
+    ],
 ];
