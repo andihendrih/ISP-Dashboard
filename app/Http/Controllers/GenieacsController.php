@@ -217,6 +217,20 @@ class GenieacsController extends Controller
         }
     }
 
+    public function setWifiSecurity(Request $request, GenieacsDevice $device): RedirectResponse
+    {
+        $data = $request->validate([
+            'security_path' => ['required', 'string'],
+            'security'      => ['required', 'in:None,Basic,WPA,11i,WPAand11i'],
+        ]);
+        try {
+            $this->genieacs->setParameter($device->device_id, $data['security_path'], $data['security'], 'xsd:string');
+            return back()->with('success', "WiFi security di-set ke {$data['security']}.");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Set WiFi security gagal: ' . $e->getMessage());
+        }
+    }
+
     public function exportCsv(Request $request): StreamedResponse
     {
         $rows = GenieacsDevice::query()

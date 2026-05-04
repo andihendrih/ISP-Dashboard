@@ -15,6 +15,11 @@
     $registeredAt = $params['registered_at'] ?? null;
     $lastInform = $device->last_inform_at;
     $mgmtIp = $wanIp['external_ip'] ?? null;
+    // Display title preference: client tag > serial > pppoe username > device_id
+    $clientTag = $tags[0] ?? null;
+    $title = $clientTag ?: ($device->serial_number ?: ($pppoe['username'] ?? null) ?: $device->device_id);
+    // Security values: None=Open, WPAand11i=WPA/WPA2 mixed, 11i=WPA2-only
+    $secOptions = ['None'=>'Open (None)','WPA'=>'WPA','11i'=>'WPA2 (11i)','WPAand11i'=>'WPA/WPA2 (WPAand11i)','Basic'=>'WEP (Basic)'];
 @endphp
 
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -24,7 +29,7 @@
         </a>
         <div>
             <h1 class="text-base sm:text-lg font-bold flex items-center gap-2 flex-wrap">
-                <span class="font-mono">{{ $device->serial_number ?: 'Unknown' }}</span>
+                <span class="{{ $clientTag ? '' : 'font-mono' }}">{{ $title }}</span>
                 <span class="inline-block w-2 h-2 rounded-full {{ $isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-ink/30' }}"></span>
                 @if($isOnline)
                     <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">Online</span>
@@ -32,7 +37,10 @@
                     <span class="text-xs bg-ink/5 text-ink/60 border border-ink/10 rounded-full px-2 py-0.5">Offline</span>
                 @endif
             </h1>
-            <p class="text-xs text-ink/55 mt-0.5">{{ $device->product_class ?? '—' }} · SW {{ $device->software_version ?? '—' }} · HW {{ $device->hardware_version ?? '—' }}</p>
+            <p class="text-xs text-ink/55 mt-0.5">
+                @if($clientTag && $device->serial_number)<span class="font-mono">{{ $device->serial_number }}</span> ·@endif
+                {{ $device->product_class ?: ($device->model_name ?: '—') }} · SW {{ $device->software_version ?? '—' }} · HW {{ $device->hardware_version ?? '—' }}
+            </p>
         </div>
     </div>
     <div class="flex flex-wrap gap-2">
@@ -263,9 +271,19 @@
                                 </div>
                             </div>
                         </form>
-                        <div class="text-[11px] text-ink/55">
-                            Security: <span class="font-mono">{{ $wifi24['security'] ?? '—' }}</span>
-                        </div>
+                        <form method="POST" action="{{ route('genieacs.wifi-security', $device) }}" class="space-y-2">
+                            @csrf
+                            <input type="hidden" name="security_path" value="{{ $wifi24['security_path'] ?? '' }}">
+                            <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Security</label>
+                            <div class="flex gap-1 mt-1">
+                                <select name="security" class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm bg-white">
+                                    @foreach($secOptions as $val => $lbl)
+                                        <option value="{{ $val }}" @selected(($wifi24['security'] ?? 'WPAand11i') === $val)>{{ $lbl }}</option>
+                                    @endforeach
+                                </select>
+                                <button class="px-3 py-2 bg-ink text-white rounded-xl text-xs hover:bg-ink/90">Set</button>
+                            </div>
+                        </form>
                     @else
                         <p class="text-ink/40 text-xs italic">2.4 GHz tidak terdeteksi.</p>
                     @endif
@@ -304,9 +322,19 @@
                                 </div>
                             </div>
                         </form>
-                        <div class="text-[11px] text-ink/55">
-                            Security: <span class="font-mono">{{ $wifi5g['security'] ?? '—' }}</span>
-                        </div>
+                        <form method="POST" action="{{ route('genieacs.wifi-security', $device) }}" class="space-y-2">
+                            @csrf
+                            <input type="hidden" name="security_path" value="{{ $wifi5g['security_path'] ?? '' }}">
+                            <label class="text-[10px] uppercase tracking-widest text-ink/45 font-semibold">Security</label>
+                            <div class="flex gap-1 mt-1">
+                                <select name="security" class="flex-1 border border-ink/10 rounded-xl px-3 py-2 text-sm bg-white">
+                                    @foreach($secOptions as $val => $lbl)
+                                        <option value="{{ $val }}" @selected(($wifi5g['security'] ?? 'WPAand11i') === $val)>{{ $lbl }}</option>
+                                    @endforeach
+                                </select>
+                                <button class="px-3 py-2 bg-ink text-white rounded-xl text-xs hover:bg-ink/90">Set</button>
+                            </div>
+                        </form>
                     @else
                         <p class="text-ink/40 text-xs italic">5 GHz tidak tersedia di model ini.</p>
                     @endif

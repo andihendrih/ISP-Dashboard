@@ -32,20 +32,47 @@ class GenieacsService
         return $client;
     }
 
+    /**
+     * Default projection — drop large vendor sub-trees we don't read so each
+     * device payload is small (10-20 KB instead of 100-200 KB).
+     */
+    private const DEFAULT_PROJECTION = '_id,_lastInform,_tags,_registered,DeviceID,VirtualParameters,'
+        . 'InternetGatewayDevice.DeviceInfo,InternetGatewayDevice.LANDevice.1.WLANConfiguration,'
+        . 'InternetGatewayDevice.WANDevice,Device.DeviceInfo';
+
     /** Raw list of ONUs from GenieACS, with optional MongoDB-style query. */
-    public function listOnu(array $query = [], int $limit = 100): array
+    public function listOnu(array $query = [], int $limit = 100, ?string $projection = self::DEFAULT_PROJECTION): array
     {
         $params = [];
         if (!empty($query)) $params['query'] = json_encode($query);
         if ($limit) $params['limit'] = $limit;
+        if ($projection) $params['projection'] = $projection;
 
         $resp = $this->http()->get('/devices', $params);
         $resp->throw();
         return $resp->json() ?? [];
     }
 
+    /**
+     * GenieACS device IDs follow the TR-069 convention
+     * `<OUI/Manufacturer>-<ProductClass>-<Serial>` (e.g.
+     * `00259E-EG8145V5-48575443711C`). Some setups expose only a 2-part id.
+     * Returns [manufacturer, productClass, serial] with nulls for missing parts.
+     */
+    public static function parseDeviceId(string $deviceId): array
+    {
+        $parts = explode('-', $deviceId, 3);
+        if (count($parts) === 3) {
+            return [$parts[0], $parts[1], $parts[2]];
+        }
+        if (count($parts) === 2) {
+            return [null, $parts[0], $parts[1]];
+        }
+        return [null, null, $deviceId];
+    }
+
     /** Sync GenieACS devices into our local genieacs_devices table. */
-    public function syncDevices(int $limit = 200): int
+    public function syncDevices(int $limit = 500): int
     {
         $rows = $this->listOnu([], $limit);
         $count = 0;
@@ -55,14 +82,21 @@ class GenieacsService
 
             $params = GenieacsParameterExtractor::from($row)->all();
 
+            // Prefer DeviceID.* from raw, fall back to parsing the device_id string.
+            $serialFromRaw  = $this->pluck($row, 'DeviceID.SerialNumber');
+            $mfgFromRaw     = $this->pluck($row, 'DeviceID.Manufacturer');
+            $productFromRaw = $this->pluck($row, 'DeviceID.ProductClass');
+            [$mfgParsed, $productParsed, $serialParsed] = self::parseDeviceId($deviceId);
+
             GenieacsDevice::updateOrCreate(
                 ['device_id' => $deviceId],
                 [
-                    'serial_number'    => $this->pluck($row, 'DeviceID.SerialNumber'),
-                    'manufacturer'     => $this->pluck($row, 'DeviceID.Manufacturer'),
-                    'product_class'    => $this->pluck($row, 'DeviceID.ProductClass'),
+                    'serial_number'    => $serialFromRaw  ?: $serialParsed,
+                    'manufacturer'     => $mfgFromRaw     ?: $mfgParsed,
+                    'product_class'    => $productFromRaw ?: $productParsed,
                     'model_name'       => $this->pluck($row, 'InternetGatewayDevice.DeviceInfo.ModelName')
-                                         ?? $this->pluck($row, 'Device.DeviceInfo.ModelName'),
+                                         ?? $this->pluck($row, 'Device.DeviceInfo.ModelName')
+                                         ?? $productParsed,
                     'software_version' => $this->pluck($row, 'InternetGatewayDevice.DeviceInfo.SoftwareVersion')
                                          ?? $this->pluck($row, 'Device.DeviceInfo.SoftwareVersion'),
                     'hardware_version' => $this->pluck($row, 'InternetGatewayDevice.DeviceInfo.HardwareVersion')
@@ -94,13 +128,22 @@ class GenieacsService
             foreach ($rows as $d) {
                 if (!is_array($d->raw)) continue;
                 $p = GenieacsParameterExtractor::from($d->raw)->all();
-                $d->forceFill([
+
+                // Backfill identity fields from device_id when raw didn't expose them
+                [$mfgParsed, $productParsed, $serialParsed] = self::parseDeviceId((string) $d->device_id);
+                $patch = [
                     'pppoe_username'  => $p['pppoe']['username'] ?? null,
                     'rx_power'        => $p['rx_power'] ?? null,
                     'wifi_ssid_24'    => $p['wifi_24']['ssid'] ?? null,
                     'wifi_ssid_5g'    => $p['wifi_5g']['ssid'] ?? null,
                     'wan_external_ip' => $p['wan_ip']['external_ip'] ?? null,
-                ])->save();
+                ];
+                if (empty($d->serial_number) && $serialParsed)  $patch['serial_number'] = $serialParsed;
+                if (empty($d->manufacturer)  && $mfgParsed)     $patch['manufacturer']  = $mfgParsed;
+                if (empty($d->product_class) && $productParsed) $patch['product_class'] = $productParsed;
+                if (empty($d->model_name)    && $productParsed) $patch['model_name']    = $productParsed;
+
+                $d->forceFill($patch)->save();
                 $count++;
             }
         });

@@ -171,6 +171,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/genieacs/{device}/pppoe',          [GenieacsController::class, 'setPppoe'])->name('genieacs.pppoe');
         Route::post('/genieacs/{device}/wan-ip',         [GenieacsController::class, 'setWanIp'])->name('genieacs.wan-ip');
         Route::post('/genieacs/{device}/suspend-wan',    [GenieacsController::class, 'suspendWan'])->name('genieacs.suspend-wan');
+        Route::post('/genieacs/{device}/wifi-security',  [GenieacsController::class, 'setWifiSecurity'])->name('genieacs.wifi-security');
     });
 
 });
