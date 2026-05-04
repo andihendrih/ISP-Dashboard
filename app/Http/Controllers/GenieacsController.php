@@ -16,17 +16,23 @@ class GenieacsController extends Controller
 
     public function index(Request $request): View
     {
+        // IMPORTANT: never include `raw` here — it's a 50-200KB JSON blob
+        // and adding it to filesort buffer triggers MySQL OOM (HY001 1038).
         $q = GenieacsDevice::query()
             ->select([
                 'id', 'device_id', 'serial_number', 'manufacturer', 'product_class',
                 'model_name', 'software_version', 'hardware_version', 'ssid', 'ip',
-                'tag', 'status', 'last_inform_at', 'raw', 'created_at', 'updated_at',
+                'tag', 'status', 'last_inform_at', 'pppoe_username', 'rx_power',
+                'wifi_ssid_24', 'wifi_ssid_5g', 'wan_external_ip',
             ]);
 
         if ($status = $request->query('status')) {
             if (in_array($status, ['online', 'offline', 'unknown'], true)) {
                 $q->where('status', $status);
             }
+        }
+        if ($model = $request->query('model')) {
+            $q->where('product_class', $model);
         }
         if ($search = trim((string) $request->query('q'))) {
             $q->where(function ($w) use ($search) {
@@ -35,7 +41,8 @@ class GenieacsController extends Controller
                   ->orWhere('model_name', 'like', "%{$search}%")
                   ->orWhere('product_class', 'like', "%{$search}%")
                   ->orWhere('ip', 'like', "%{$search}%")
-                  ->orWhere('ssid', 'like', "%{$search}%");
+                  ->orWhere('ssid', 'like', "%{$search}%")
+                  ->orWhere('pppoe_username', 'like', "%{$search}%");
             });
         }
 
@@ -47,7 +54,19 @@ class GenieacsController extends Controller
             'offline' => GenieacsDevice::where('status', 'offline')->count(),
         ];
 
-        return view('genieacs.index', compact('devices', 'stats'));
+        $modelStats = GenieacsDevice::query()
+            ->selectRaw("
+                COALESCE(NULLIF(product_class, ''), 'Unknown') as product_class,
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'online' THEN 1 ELSE 0 END) as online,
+                SUM(CASE WHEN status = 'offline' THEN 1 ELSE 0 END) as offline
+            ")
+            ->groupBy('product_class')
+            ->orderByDesc('total')
+            ->limit(8)
+            ->get();
+
+        return view('genieacs.index', compact('devices', 'stats', 'modelStats'));
     }
 
     public function show(GenieacsDevice $device): View

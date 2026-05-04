@@ -16,11 +16,13 @@ class GenieacsDevice extends Model
         'device_id', 'serial_number', 'manufacturer', 'product_class',
         'model_name', 'software_version', 'hardware_version',
         'ssid', 'ip', 'tag', 'status', 'last_inform_at', 'raw',
+        'pppoe_username', 'rx_power', 'wifi_ssid_24', 'wifi_ssid_5g', 'wan_external_ip',
     ];
 
     protected $casts = [
         'last_inform_at' => 'datetime',
         'raw'            => 'array',
+        'rx_power'       => 'float',
     ];
 
     private ?array $cachedParams = null;
@@ -38,12 +40,12 @@ class GenieacsDevice extends Model
 
     public function pppoeUsername(): ?string
     {
-        return $this->params()['pppoe']['username'] ?? null;
+        return $this->pppoe_username ?? ($this->params()['pppoe']['username'] ?? null);
     }
 
     public function rxPower(): ?float
     {
-        return $this->params()['rx_power'] ?? null;
+        return $this->rx_power ?? ($this->params()['rx_power'] ?? null);
     }
 
     public function tagsList(): array

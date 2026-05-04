@@ -47,21 +47,49 @@
     <div class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-3 mb-4 text-sm">{{ session('error') }}</div>
 @endif
 
-{{-- Stat chips --}}
-<div class="flex flex-wrap gap-2 mb-4">
-    <a href="{{ route('genieacs.index', ['q' => request('q')]) }}"
+@php $modelFilter = request('model'); @endphp
+
+{{-- Status stat chips --}}
+<div class="flex flex-wrap gap-2 mb-3">
+    <a href="{{ route('genieacs.index', array_filter(['q' => request('q'), 'model' => $modelFilter])) }}"
        class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium border {{ !$statusFilter ? 'border-blue-300 bg-blue-50 text-blue-900' : 'border-ink/10 bg-white text-ink/70 hover:bg-cream-card/40' }}">
         Total <span class="px-2 py-0.5 rounded-full text-xs {{ !$statusFilter ? 'bg-blue-200 text-blue-900' : 'bg-ink/5 text-ink/60' }}">{{ number_format($stats['total']) }}</span>
     </a>
-    <a href="{{ route('genieacs.index', ['status' => 'online', 'q' => request('q')]) }}"
+    <a href="{{ route('genieacs.index', array_filter(['status' => 'online', 'q' => request('q'), 'model' => $modelFilter])) }}"
        class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium border {{ $isOnlineFilter ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : 'border-ink/10 bg-white text-ink/70 hover:bg-cream-card/40' }}">
         Online <span class="px-2 py-0.5 rounded-full text-xs {{ $isOnlineFilter ? 'bg-emerald-200 text-emerald-900' : 'bg-emerald-100 text-emerald-700' }}">{{ number_format($stats['online']) }}</span>
     </a>
-    <a href="{{ route('genieacs.index', ['status' => 'offline', 'q' => request('q')]) }}"
+    <a href="{{ route('genieacs.index', array_filter(['status' => 'offline', 'q' => request('q'), 'model' => $modelFilter])) }}"
        class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium border {{ $isOfflineFilter ? 'border-ink/30 bg-ink/5 text-ink' : 'border-ink/10 bg-white text-ink/70 hover:bg-cream-card/40' }}">
         Offline <span class="px-2 py-0.5 rounded-full text-xs {{ $isOfflineFilter ? 'bg-ink/20 text-ink' : 'bg-ink/5 text-ink/60' }}">{{ number_format($stats['offline']) }}</span>
     </a>
 </div>
+
+{{-- Per-model stat tiles --}}
+@if(count($modelStats ?? []))
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
+    @foreach($modelStats as $m)
+        @php $isActive = $modelFilter === $m->product_class; @endphp
+        <a href="{{ $isActive ? route('genieacs.index', array_filter(['status' => $statusFilter, 'q' => request('q')])) : route('genieacs.index', array_filter(['status' => $statusFilter, 'q' => request('q'), 'model' => $m->product_class])) }}"
+           class="bg-white rounded-2xl shadow-card p-3 border {{ $isActive ? 'border-blue-300 ring-2 ring-blue-100' : 'border-transparent hover:border-blue-200' }} transition">
+            <div class="flex items-start justify-between gap-1">
+                <div class="text-xs font-semibold text-ink/80 truncate">{{ $m->product_class }}</div>
+                <div class="text-base font-bold text-ink">{{ number_format($m->total) }}</div>
+            </div>
+            <div class="flex items-center gap-2 mt-1.5 text-[11px]">
+                <span class="inline-flex items-center gap-1 text-emerald-600">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    {{ $m->online }}
+                </span>
+                <span class="inline-flex items-center gap-1 text-ink/40">
+                    <span class="w-1.5 h-1.5 rounded-full bg-ink/30"></span>
+                    {{ $m->offline }}
+                </span>
+            </div>
+        </a>
+    @endforeach
+</div>
+@endif
 
 {{-- Search --}}
 <form method="GET" class="mb-4">

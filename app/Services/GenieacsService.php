@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\GenieacsDevice;
+use App\Services\GenieacsParameterExtractor;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
@@ -52,6 +53,8 @@ class GenieacsService
             $deviceId = $row['_id'] ?? null;
             if (!$deviceId) continue;
 
+            $params = GenieacsParameterExtractor::from($row)->all();
+
             GenieacsDevice::updateOrCreate(
                 ['device_id' => $deviceId],
                 [
@@ -64,17 +67,43 @@ class GenieacsService
                                          ?? $this->pluck($row, 'Device.DeviceInfo.SoftwareVersion'),
                     'hardware_version' => $this->pluck($row, 'InternetGatewayDevice.DeviceInfo.HardwareVersion')
                                          ?? $this->pluck($row, 'Device.DeviceInfo.HardwareVersion'),
-                    'ssid'             => $this->pluck($row, 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID')
-                                         ?? $this->pluck($row, 'Device.WiFi.SSID.1.SSID'),
-                    'ip'               => $this->pluck($row, 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress'),
+                    'ssid'             => $params['wifi_24']['ssid'] ?? null,
+                    'ip'               => $params['wan_ip']['external_ip'] ?? null,
                     'tag'              => isset($row['_tags']) && is_array($row['_tags']) ? implode(',', $row['_tags']) : null,
                     'status'           => $this->statusFromLastInform($row),
                     'last_inform_at'   => isset($row['_lastInform']) ? Carbon::parse($row['_lastInform']) : null,
                     'raw'              => $row,
+                    // Cached extracted fields (avoid loading raw JSON on list page)
+                    'pppoe_username'   => $params['pppoe']['username'] ?? null,
+                    'rx_power'         => $params['rx_power'] ?? null,
+                    'wifi_ssid_24'     => $params['wifi_24']['ssid'] ?? null,
+                    'wifi_ssid_5g'    => $params['wifi_5g']['ssid'] ?? null,
+                    'wan_external_ip' => $params['wan_ip']['external_ip'] ?? null,
                 ]
             );
             $count++;
         }
+        return $count;
+    }
+
+    /** Re-extract cache columns for all devices from existing raw JSON. */
+    public function rebuildExtractedFields(int $chunk = 100): int
+    {
+        $count = 0;
+        GenieacsDevice::query()->orderBy('id')->chunkById($chunk, function ($rows) use (&$count) {
+            foreach ($rows as $d) {
+                if (!is_array($d->raw)) continue;
+                $p = GenieacsParameterExtractor::from($d->raw)->all();
+                $d->forceFill([
+                    'pppoe_username'  => $p['pppoe']['username'] ?? null,
+                    'rx_power'        => $p['rx_power'] ?? null,
+                    'wifi_ssid_24'    => $p['wifi_24']['ssid'] ?? null,
+                    'wifi_ssid_5g'    => $p['wifi_5g']['ssid'] ?? null,
+                    'wan_external_ip' => $p['wan_ip']['external_ip'] ?? null,
+                ])->save();
+                $count++;
+            }
+        });
         return $count;
     }
 
