@@ -3,11 +3,20 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GenieacsController;
 use App\Http\Controllers\HotspotController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\MikrotikController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PppoeController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ServicePlanController;
 use App\Http\Controllers\SnmpController;
+use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,13 +38,74 @@ Route::middleware('auth')->group(function () {
     /* Pelanggan */
     Route::middleware('role:admin,noc,finance')->group(function () {
         Route::get('/customers',           [CustomerController::class, 'index'])->name('customers.index');
+        Route::get('/customers/create',    [CustomerController::class, 'create'])->name('customers.create');
+        Route::post('/customers',          [CustomerController::class, 'store'])->name('customers.store');
         Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('/customers/{id}',      [CustomerController::class, 'update'])->name('customers.update');
+        Route::delete('/customers/{id}',   [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+        /* Map view pelanggan (Leaflet + OpenStreetMap) */
+        Route::get('/map',           [MapController::class, 'index'])->name('map.index');
+        Route::get('/map/customers', [MapController::class, 'customers'])->name('map.customers');
 
         Route::get('/users-radius',          [UserManagementController::class, 'index'])->name('users.index');
         Route::get('/users-radius/{username}', [UserManagementController::class, 'show'])
             ->where('username', '.*')
             ->name('users.show');
+
+        /* Billing — Invoices & Payments (admin + finance) */
+        Route::get('/invoices',                 [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/create',          [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('/invoices',                [InvoiceController::class, 'store'])->name('invoices.store');
+        Route::post('/invoices/generate-batch', [InvoiceController::class, 'generateBatch'])->name('invoices.generate-batch');
+        Route::get('/invoices/{invoice}',       [InvoiceController::class, 'show'])->name('invoices.show');
+        Route::post('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+
+        Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('payments.store');
+        Route::delete('/payments/{payment}',        [PaymentController::class, 'destroy'])->name('payments.destroy');
+
+        /* Laporan */
+        Route::get('/reports/financial',         [ReportController::class, 'financial'])->name('reports.financial');
+        Route::get('/reports/financial/export',  [ReportController::class, 'exportCsv'])->name('reports.financial.export');
+        Route::get('/reports/churn',             [ReportController::class, 'churn'])->name('reports.churn');
+
+        /* Tiket Support */
+        Route::get('/tickets',                   [SupportTicketController::class, 'index'])->name('tickets.index');
+        Route::get('/tickets/create',            [SupportTicketController::class, 'create'])->name('tickets.create');
+        Route::post('/tickets',                  [SupportTicketController::class, 'store'])->name('tickets.store');
+        Route::get('/tickets/{ticket}',          [SupportTicketController::class, 'show'])->name('tickets.show');
+        Route::post('/tickets/{ticket}/comment', [SupportTicketController::class, 'comment'])->name('tickets.comment');
+        Route::post('/tickets/{ticket}/status',  [SupportTicketController::class, 'updateStatus'])->name('tickets.status');
+        Route::post('/tickets/{ticket}/assign',  [SupportTicketController::class, 'assign'])->name('tickets.assign');
+
+        /* Notifikasi */
+        Route::get('/notifications/settings',     [NotificationController::class, 'settings'])->name('notifications.settings');
+        Route::post('/notifications/settings',    [NotificationController::class, 'saveSettings'])->name('notifications.settings.save');
+        Route::post('/notifications/test',        [NotificationController::class, 'testSend'])->name('notifications.test');
+        Route::get('/notifications/logs',         [NotificationController::class, 'logs'])->name('notifications.logs');
+        Route::post('/invoices/{invoice}/notify', [NotificationController::class, 'sendInvoiceNotification'])->name('notifications.invoice');
+
+        /* Service Plans (paket harga) */
+        Route::get('/plans',              [ServicePlanController::class, 'index'])->name('plans.index');
+        Route::get('/plans/create',       [ServicePlanController::class, 'create'])->name('plans.create');
+        Route::post('/plans',             [ServicePlanController::class, 'store'])->name('plans.store');
+        Route::get('/plans/{plan}/edit',  [ServicePlanController::class, 'edit'])->name('plans.edit');
+        Route::put('/plans/{plan}',       [ServicePlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}',    [ServicePlanController::class, 'destroy'])->name('plans.destroy');
+    });
+
+    /* Inventory perangkat (ONU / Router / dst) */
+    Route::middleware('role:admin,noc')->group(function () {
+        Route::get('/devices',                    [DeviceController::class, 'index'])->name('devices.index');
+        Route::get('/devices/create',             [DeviceController::class, 'create'])->name('devices.create');
+        Route::post('/devices',                   [DeviceController::class, 'store'])->name('devices.store');
+        Route::get('/devices/{device}',           [DeviceController::class, 'show'])->name('devices.show');
+        Route::get('/devices/{device}/edit',      [DeviceController::class, 'edit'])->name('devices.edit');
+        Route::put('/devices/{device}',           [DeviceController::class, 'update'])->name('devices.update');
+        Route::delete('/devices/{device}',        [DeviceController::class, 'destroy'])->name('devices.destroy');
+        Route::post('/devices/{device}/assign',     [DeviceController::class, 'assign'])->name('devices.assign');
+        Route::post('/devices/{device}/transition', [DeviceController::class, 'transition'])->name('devices.transition');
     });
 
     /* PPPoE */
@@ -54,6 +124,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/hotspot/create',  [HotspotController::class, 'create'])->name('hotspot.create');
         Route::post('/hotspot',        [HotspotController::class, 'store'])->name('hotspot.store');
         Route::delete('/hotspot/{id}', [HotspotController::class, 'destroy'])->name('hotspot.destroy');
+
+        /* Voucher Hotspot (sourced from FreeRADIUS Hotspot* / HS_* groups) */
+        Route::get('/vouchers',                       [VoucherController::class, 'index'])->name('vouchers.index');
+        Route::post('/vouchers/bulk-expired',         [VoucherController::class, 'bulkDeleteExpired'])->name('vouchers.bulk-expired');
+
+        /* Voucher generator + cetak A4 (5x6 = 30/lembar) */
+        Route::get('/vouchers/generate',              [VoucherController::class, 'generateForm'])->name('vouchers.generate-form');
+        Route::post('/vouchers/generate',             [VoucherController::class, 'generate'])->name('vouchers.generate');
+        Route::get('/vouchers/batch/{batch}/print',   [VoucherController::class, 'batchPrint'])->name('vouchers.batch.print');
+        Route::get('/vouchers/batch/{batch}',         [VoucherController::class, 'batchShow'])->name('vouchers.batch.show');
+        Route::delete('/vouchers/batch/{batch}',      [VoucherController::class, 'batchDestroy'])->name('vouchers.batch.destroy');
+
+        Route::delete('/vouchers/{username}',         [VoucherController::class, 'destroy'])
+            ->where('username', '.*')->name('vouchers.destroy');
 
         /* Mikrotik */
         Route::get('/mikrotik',                       [MikrotikController::class, 'index'])->name('mikrotik.index');
