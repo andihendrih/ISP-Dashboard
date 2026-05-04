@@ -87,25 +87,82 @@ class GenieacsService
         return $this->postTask($deviceId, ['name' => 'reboot']);
     }
 
-    public function setSsid(string $deviceId, string $ssid): Response
+    public function setSsid(string $deviceId, string $ssid, ?string $wlanPath = null): Response
     {
+        $base = $wlanPath ?: 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1';
         return $this->postTask($deviceId, [
             'name'             => 'setParameterValues',
             'parameterValues'  => [
-                ['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID', $ssid, 'xsd:string'],
+                ["{$base}.SSID", $ssid, 'xsd:string'],
             ],
         ]);
     }
 
-    public function setWifiPassword(string $deviceId, string $password): Response
+    public function setWifiPassword(string $deviceId, string $password, ?string $wlanPath = null): Response
+    {
+        $base = $wlanPath ?: 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1';
+        return $this->postTask($deviceId, [
+            'name'            => 'setParameterValues',
+            'parameterValues' => [
+                ["{$base}.PreSharedKey.1.KeyPassphrase", $password, 'xsd:string'],
+                ["{$base}.PreSharedKey.1.PreSharedKey", $password, 'xsd:string'],
+                ["{$base}.KeyPassphrase", $password, 'xsd:string'],
+            ],
+        ]);
+    }
+
+    /** Set PPPoE credentials on a specific WAN connection path. */
+    public function setPppoeCredentials(string $deviceId, string $base, string $username, string $password): Response
     {
         return $this->postTask($deviceId, [
             'name'            => 'setParameterValues',
             'parameterValues' => [
-                ['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.PreSharedKey', $password, 'xsd:string'],
-                ['InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.KeyPassphrase', $password, 'xsd:string'],
+                ["{$base}.Username", $username, 'xsd:string'],
+                ["{$base}.Password", $password, 'xsd:string'],
             ],
         ]);
+    }
+
+    /** Toggle WAN Enable on a specific connection path. */
+    public function setWanEnable(string $deviceId, string $base, bool $enable): Response
+    {
+        return $this->postTask($deviceId, [
+            'name'            => 'setParameterValues',
+            'parameterValues' => [
+                ["{$base}.Enable", $enable, 'xsd:boolean'],
+            ],
+        ]);
+    }
+
+    /** Suspend / unsuspend WAN service. */
+    public function suspendWan(string $deviceId, string $base): Response
+    {
+        return $this->setWanEnable($deviceId, $base, false);
+    }
+
+    public function enableWan(string $deviceId, string $base): Response
+    {
+        return $this->setWanEnable($deviceId, $base, true);
+    }
+
+    /** Update WAN IP static config (external IP, subnet, gateway). */
+    public function setWanIp(string $deviceId, string $base, string $ip, string $subnet, string $gateway): Response
+    {
+        return $this->postTask($deviceId, [
+            'name'            => 'setParameterValues',
+            'parameterValues' => [
+                ["{$base}.AddressingType", 'Static', 'xsd:string'],
+                ["{$base}.ExternalIPAddress", $ip, 'xsd:string'],
+                ["{$base}.SubnetMask", $subnet, 'xsd:string'],
+                ["{$base}.DefaultGateway", $gateway, 'xsd:string'],
+            ],
+        ]);
+    }
+
+    /** Trigger TR-069 factory reset task. */
+    public function factoryReset(string $deviceId): Response
+    {
+        return $this->postTask($deviceId, ['name' => 'factoryReset']);
     }
 
     public function refreshDevice(string $deviceId): Response
