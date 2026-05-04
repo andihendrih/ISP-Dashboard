@@ -19,7 +19,11 @@
         <h1 class="text-xl sm:text-2xl font-bold">Inventory Perangkat</h1>
         <p class="text-sm text-ink/55">Stok &amp; history ONU / router / perangkat jaringan.</p>
     </div>
-    <a href="{{ route('devices.create') }}" class="px-4 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black text-sm whitespace-nowrap self-start sm:self-auto">+ Tambah Perangkat</a>
+    <div class="flex flex-wrap gap-2 self-start sm:self-auto">
+        <a href="{{ route('devices.scan') }}" class="px-4 py-2 border border-ink/10 bg-white rounded-xl text-sm whitespace-nowrap">📷 Scan QR</a>
+        <a href="{{ route('devices.qr-sheet', request()->only(['q','type','status'])) }}" target="_blank" class="px-4 py-2 border border-ink/10 bg-white rounded-xl text-sm whitespace-nowrap">🔳 Cetak QR Sheet</a>
+        <a href="{{ route('devices.create') }}" class="px-4 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black text-sm whitespace-nowrap">+ Tambah Perangkat</a>
+    </div>
 </div>
 
 @if(session('success'))

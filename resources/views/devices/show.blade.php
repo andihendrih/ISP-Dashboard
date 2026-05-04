@@ -10,7 +10,8 @@
         <h1 class="text-xl sm:text-2xl font-bold font-mono">{{ $device->serial_number }}</h1>
         <p class="text-sm text-ink/55">{{ $device->typeLabel() }} · {{ $device->brand ?: '—' }} {{ $device->model }}</p>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
+        <a href="{{ route('devices.qr', $device) }}" target="_blank" class="px-3 py-2 border border-ink/10 rounded-xl text-sm bg-white hover:bg-cream-card/40">🔳 Cetak QR</a>
         <a href="{{ route('devices.edit', $device) }}" class="px-3 py-2 border border-ink/10 rounded-xl text-sm bg-white">Edit</a>
         <a href="{{ route('devices.index') }}" class="px-3 py-2 text-sm text-ink/55 hover:underline self-center">&larr; Kembali</a>
     </div>

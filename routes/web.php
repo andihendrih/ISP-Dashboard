@@ -100,13 +100,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/devices',                    [DeviceController::class, 'index'])->name('devices.index');
         Route::get('/devices/create',             [DeviceController::class, 'create'])->name('devices.create');
         Route::post('/devices',                   [DeviceController::class, 'store'])->name('devices.store');
+        Route::get('/devices/scan',               [DeviceController::class, 'scan'])->name('devices.scan');
+        Route::get('/devices/qr-sheet',           [DeviceController::class, 'qrSheet'])->name('devices.qr-sheet');
         Route::get('/devices/{device}',           [DeviceController::class, 'show'])->name('devices.show');
         Route::get('/devices/{device}/edit',      [DeviceController::class, 'edit'])->name('devices.edit');
         Route::put('/devices/{device}',           [DeviceController::class, 'update'])->name('devices.update');
         Route::delete('/devices/{device}',        [DeviceController::class, 'destroy'])->name('devices.destroy');
         Route::post('/devices/{device}/assign',     [DeviceController::class, 'assign'])->name('devices.assign');
         Route::post('/devices/{device}/transition', [DeviceController::class, 'transition'])->name('devices.transition');
+        Route::get('/devices/{device}/qr',         [DeviceController::class, 'qr'])->name('devices.qr');
     });
+
+    /* Shortlink QR: scan -> redirect detail perangkat by serial */
+    Route::get('/d/{serial}', [DeviceController::class, 'lookup'])->where('serial', '.+')->name('devices.lookup');
 
     /* PPPoE */
     Route::middleware('role:admin,noc')->group(function () {

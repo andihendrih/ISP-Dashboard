@@ -159,6 +159,69 @@ class DeviceController extends Controller
         return back()->with('success', 'Status perangkat diperbarui.');
     }
 
+    /**
+     * Single-device QR print page.
+     */
+    public function qr(Device $device): View
+    {
+        return view('devices.qr', [
+            'device' => $device,
+            'url'    => url('/d/' . $device->serial_number),
+        ]);
+    }
+
+    /**
+     * Bulk QR sheet (A4 3x8 = 24 stickers).
+     */
+    public function qrSheet(Request $request): View
+    {
+        $q = Device::query();
+        if ($type = $request->query('type')) {
+            $q->where('type', $type);
+        }
+        if ($status = $request->query('status')) {
+            $q->where('status', $status);
+        }
+        if ($ids = $request->query('ids')) {
+            $idList = array_filter(array_map('intval', explode(',', $ids)));
+            if ($idList) $q->whereIn('id', $idList);
+        }
+        if ($search = $request->query('q')) {
+            $q->where(function ($w) use ($search) {
+                $w->where('serial_number', 'like', "%{$search}%")
+                  ->orWhere('mac_address', 'like', "%{$search}%");
+            });
+        }
+
+        $devices = $q->orderBy('serial_number')->limit(500)->get();
+
+        return view('devices.qr-sheet', [
+            'devices' => $devices,
+            'base'    => rtrim(url('/d'), '/'),
+        ]);
+    }
+
+    /**
+     * Scanner page (mobile camera via html5-qrcode).
+     */
+    public function scan(): View
+    {
+        return view('devices.scan');
+    }
+
+    /**
+     * Shortlink: /d/{serial} -> redirect ke detail perangkat.
+     */
+    public function lookup(string $serial): RedirectResponse
+    {
+        $device = Device::where('serial_number', $serial)->first();
+        if (!$device) {
+            return redirect()->route('devices.index')
+                ->with('error', "Perangkat dengan serial {$serial} tidak ditemukan.");
+        }
+        return redirect()->route('devices.show', $device);
+    }
+
     private function validated(Request $request, ?int $ignoreId = null): array
     {
         $uniqueRule = 'unique:devices_inventory,serial_number';
