@@ -14,7 +14,18 @@ class GenieacsController extends Controller
 
     public function index(): View
     {
-        $devices = GenieacsDevice::orderByDesc('last_inform_at')->paginate(50);
+        // Exclude `raw` (JSON) column from list query — kolom ini bisa sangat besar
+        // (full TR-069 parameter tree) dan bikin MySQL kehabisan sort memory saat
+        // `ORDER BY last_inform_at`. Data `raw` cuma dipakai di detail, bukan list.
+        $devices = GenieacsDevice::query()
+            ->select([
+                'id', 'device_id', 'serial_number', 'manufacturer', 'product_class',
+                'model_name', 'software_version', 'hardware_version', 'ssid', 'ip',
+                'tag', 'status', 'last_inform_at', 'created_at', 'updated_at',
+            ])
+            ->orderByDesc('last_inform_at')
+            ->paginate(50);
+
         return view('genieacs.index', ['devices' => $devices]);
     }
 
