@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Support\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VoucherBatch extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'label', 'profile', 'count', 'prefix', 'code_length',
         'expires_at', 'codes', 'created_by',

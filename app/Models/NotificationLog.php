@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Support\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NotificationLog extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'channel', 'template', 'recipient', 'subject', 'body',
         'status', 'provider_response', 'sent_at',

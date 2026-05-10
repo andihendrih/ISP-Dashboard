@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Support\Tenancy\BelongsToTenant;
 
 class NotificationSetting extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = ['key', 'enabled', 'value'];
     protected $casts = ['enabled' => 'bool'];
 

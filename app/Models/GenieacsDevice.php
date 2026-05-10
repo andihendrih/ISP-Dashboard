@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Services\GenieacsParameterExtractor;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Support\Tenancy\BelongsToTenant;
 
 class GenieacsDevice extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     protected $table = 'genieacs_devices';
 

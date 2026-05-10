@@ -6,12 +6,17 @@ use App\Services\Notifications\Contracts\WaProvider;
 use App\Services\Notifications\Providers\CloudApiProvider;
 use App\Services\Notifications\Providers\FonnteProvider;
 use App\Services\Notifications\Providers\NullWaProvider;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Singleton tenant context — 1 instance per request lifecycle.
+        // Di-resolve oleh ResolveTenant middleware tiap request authenticated.
+        $this->app->singleton(TenantContext::class, fn () => new TenantContext());
+
         $this->app->singleton(WaProvider::class, function () {
             $provider = (string) env('WA_PROVIDER', 'null');
             return match ($provider) {

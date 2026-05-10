@@ -39,6 +39,7 @@ class CustomerAccountService
             'email'               => $email,
             'password'            => Hash::make($plain),
             'role_id'             => $role?->id,
+            'tenant_id'           => $profile->tenant_id, // ikut tenant dari customer
             'customer_profile_id' => $profile->id,
             'is_active'           => true,
         ]);
