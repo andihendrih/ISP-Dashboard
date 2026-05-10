@@ -266,4 +266,31 @@ class CustomerController extends Controller
 
         return redirect()->route('customers.index')->with('success', 'Pelanggan diperbarui.');
     }
+
+    /**
+     * Regenerate RADIUS password for a customer (one-click reset).
+     * Pakai generator alphanumeric-only supaya aman lewat semua jalur auth.
+     */
+    public function regenerateRadiusPassword(int $id): RedirectResponse
+    {
+        $row = CustomerProfile::findOrFail($id);
+
+        if (!$row->radius_username) {
+            return back()->with('error', "Pelanggan {$row->customer_code} belum punya RADIUS username — tidak bisa regenerate password.");
+        }
+
+        $newPassword = $this->radius->generatePppoePassword();
+
+        try {
+            $this->radius->setPassword($row->radius_username, $newPassword);
+            $row->update(['radius_password' => $newPassword]);
+            return back()->with('success',
+                "Password RADIUS {$row->radius_username} berhasil di-regenerate. " .
+                "Username: {$row->radius_username} | Password baru: {$newPassword}"
+            );
+        } catch (\Throwable $e) {
+            Log::warning("RADIUS regenerate password failed for {$row->radius_username}: ".$e->getMessage());
+            return back()->with('error', "Regenerate password gagal: {$e->getMessage()}");
+        }
+    }
 }

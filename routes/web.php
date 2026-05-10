@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('/customers/{id}',      [CustomerController::class, 'update'])->name('customers.update');
         Route::delete('/customers/{id}',   [CustomerController::class, 'destroy'])->name('customers.destroy');
+        Route::post('/customers/{id}/regenerate-radius', [CustomerController::class, 'regenerateRadiusPassword'])->name('customers.regenerate-radius');
 
         /* Map view pelanggan (Leaflet + OpenStreetMap) */
         Route::get('/map',           [MapController::class, 'index'])->name('map.index');

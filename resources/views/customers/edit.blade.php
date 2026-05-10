@@ -4,6 +4,17 @@
 @section('content')
 <h1 class="text-xl font-bold mb-4">Edit Pelanggan: {{ $row->full_name }}</h1>
 
+@if($row->radius_username)
+    {{-- hidden form for regenerate RADIUS password (must live outside main form) --}}
+    <form id="ah-regen-form" method="POST" action="{{ route('customers.regenerate-radius', $row->id) }}" class="hidden">@csrf</form>
+    <script>
+        function ahRegenRadiusPw() {
+            if (!confirm('Generate password RADIUS baru untuk {{ $row->radius_username }}? Password lama akan ke-replace permanent di RADIUS server.')) return;
+            document.getElementById('ah-regen-form').submit();
+        }
+    </script>
+@endif
+
 <form method="POST" action="{{ route('customers.update', $row->id) }}" class="bg-white p-6 rounded-xl border border-cream-deep/60 max-w-3xl space-y-4">
     @csrf @method('PUT')
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -63,9 +74,19 @@
             <input name="radius_username" value="{{ old('radius_username', $row->radius_username) }}" placeholder="ahnet_username" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
         </div>
         <div>
-            <label class="text-sm font-medium">Password</label>
+            <div class="flex items-center justify-between">
+                <label class="text-sm font-medium">Password</label>
+                @if($row->radius_username)
+                    <button type="button" onclick="ahRegenRadiusPw()"
+                        class="text-[11px] font-semibold text-ink/60 hover:text-ink bg-cream-deep/60 px-2 py-1 rounded-lg flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114-4M20 15a8 8 0 01-14 4"/></svg>
+                        Regenerate
+                    </button>
+                @endif
+            </div>
             <input name="radius_password" value="{{ old('radius_password', $row->radius_password) }}" placeholder="auto-generate kalau kosong" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
         </div>
+
         <div>
             <label class="text-sm font-medium">Mikrotik Device <span class="text-ink/40 font-normal">(opsional)</span></label>
             <select name="mikrotik_device_id" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
