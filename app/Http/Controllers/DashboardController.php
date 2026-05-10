@@ -43,6 +43,25 @@ class DashboardController extends Controller
             $perMonth[$m] = ($perMonth[$m] ?? 0) + 1;
         }
 
+        // Bar: pemasukan per bulan tahun ini (dari invoice paid_amount, status=lunas)
+        $revenuePerMonth = array_fill(1, 12, 0.0);
+        try {
+            $invoiceRows = Invoice::query()
+                ->where('status', Invoice::STATUS_LUNAS)
+                ->where('period_year', $year)
+                ->selectRaw('period_month as m, COALESCE(SUM(paid_amount), 0) as total')
+                ->groupBy('period_month')
+                ->get();
+            foreach ($invoiceRows as $r) {
+                $m = (int) $r->m;
+                if ($m >= 1 && $m <= 12) {
+                    $revenuePerMonth[$m] = (float) $r->total;
+                }
+            }
+        } catch (\Throwable $e) {
+            // table mungkin belum ada di env lama
+        }
+
         // Kesehatan layanan
         try {
             $billingActive    = CustomerProfile::where('status', 'active')->count();
@@ -92,6 +111,7 @@ class DashboardController extends Controller
             'isolir'          => $isolir,
             'statusBuckets'   => $statusBuckets,
             'perMonth'        => array_values($perMonth),
+            'revenuePerMonth' => array_values($revenuePerMonth),
             'kesehatan'       => [
                 'billing_active'     => $billingActive,
                 'billing_non_active' => $billingNonActive,

@@ -74,28 +74,50 @@
 
     {{-- Charts row --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-card">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        {{-- Pelanggan Baru Tahunan --}}
+        <div class="bg-white rounded-3xl p-5 shadow-card">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                 <div>
-                    <div class="font-bold text-lg">Pelanggan Baru Tahunan</div>
-                    <div class="text-xs text-ink/50 mt-0.5">Tren penambahan pelanggan per bulan</div>
+                    <div class="font-bold text-base">Pelanggan Baru</div>
+                    <div class="text-[11px] text-ink/50">Per bulan tahun {{ $year }}</div>
                 </div>
-                <form method="GET" class="flex items-center gap-2">
-                    <select name="year" class="bg-cream-deep/60 border-0 rounded-xl text-sm px-3 py-2 font-medium focus:ring-2 focus:ring-accent">
+                <form method="GET" class="flex items-center gap-1.5">
+                    <select name="year" class="bg-cream-deep/60 border-0 rounded-lg text-xs px-2 py-1.5 font-medium focus:ring-2 focus:ring-accent">
                         @for($y = now()->year; $y >= now()->year - 5; $y--)
                             <option value="{{ $y }}" @selected($y === $year)>{{ $y }}</option>
                         @endfor
                     </select>
-                    <button class="px-4 py-2 text-sm bg-ink text-white rounded-xl font-semibold hover:bg-black transition">Terapkan</button>
+                    <button class="px-2.5 py-1.5 text-xs bg-ink text-white rounded-lg font-semibold hover:bg-black transition">OK</button>
                 </form>
             </div>
-            <canvas id="chartYearly" height="100"></canvas>
+            <div class="relative h-48">
+                <canvas id="chartYearly"></canvas>
+            </div>
         </div>
 
-        <div class="bg-white rounded-3xl p-6 shadow-card">
-            <div class="font-bold text-lg">Komposisi Status</div>
-            <div class="text-xs text-ink/50 mt-0.5 mb-4">Distribusi layanan</div>
-            <canvas id="chartStatus" height="220"></canvas>
+        {{-- Pemasukan Per Bulan --}}
+        <div class="bg-white rounded-3xl p-5 shadow-card">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <div class="font-bold text-base">Pemasukan Bulanan</div>
+                    <div class="text-[11px] text-ink/50">Tahun {{ $year }}</div>
+                </div>
+                <span class="text-[11px] font-semibold text-ink/60 bg-cream-deep/60 px-2 py-1 rounded-lg">
+                    Rp {{ number_format(array_sum($revenuePerMonth), 0, ',', '.') }}
+                </span>
+            </div>
+            <div class="relative h-48">
+                <canvas id="chartRevenue"></canvas>
+            </div>
+        </div>
+
+        {{-- Komposisi Status --}}
+        <div class="bg-white rounded-3xl p-5 shadow-card">
+            <div class="font-bold text-base">Komposisi Status</div>
+            <div class="text-[11px] text-ink/50 mb-3">Distribusi layanan</div>
+            <div class="relative h-48">
+                <canvas id="chartStatus"></canvas>
+            </div>
         </div>
     </div>
 
@@ -195,31 +217,73 @@ document.addEventListener('DOMContentLoaded', function () {
     Chart.defaults.font.family = 'Plus Jakarta Sans, sans-serif';
     Chart.defaults.color = '#6b6b6b';
 
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
     const yearly = document.getElementById('chartYearly').getContext('2d');
     new Chart(yearly, {
         type: 'bar',
         data: {
-            labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+            labels: months,
             datasets: [{
                 label: 'Pelanggan Baru',
                 data: @json($perMonth),
                 backgroundColor: ctx => {
-                    const c = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220);
+                    const c = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
                     c.addColorStop(0, '#f5c542');
                     c.addColorStop(1, '#fde79a');
                     return c;
                 },
-                borderRadius: 10,
+                borderRadius: 8,
                 borderSkipped: false,
-                maxBarThickness: 28,
+                maxBarThickness: 18,
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,.05)' } },
-                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.05)' } },
+                x: { ticks: { font: { size: 10 } }, grid: { display: false } },
             },
             plugins: { legend: { display: false } }
+        }
+    });
+
+    const fmtIDR = v => 'Rp ' + (v >= 1e6 ? (v/1e6).toFixed(1)+'jt' : v >= 1e3 ? Math.round(v/1e3)+'rb' : v);
+    const revenue = document.getElementById('chartRevenue').getContext('2d');
+    new Chart(revenue, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Pemasukan',
+                data: @json($revenuePerMonth),
+                backgroundColor: ctx => {
+                    const c = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
+                    c.addColorStop(0, '#1a1a1a');
+                    c.addColorStop(1, '#3a3a3a');
+                    return c;
+                },
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 18,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: fmtIDR }, grid: { color: 'rgba(0,0,0,.05)' } },
+                x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (c) => 'Rp ' + Number(c.raw).toLocaleString('id-ID')
+                    }
+                }
+            }
         }
     });
 
@@ -237,17 +301,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 ],
                 backgroundColor: ['#f5c542','#1a1a1a','#fde79a','#cfcfcf'],
                 borderWidth: 0,
-                borderRadius: 6,
+                borderRadius: 4,
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 16, font: { weight: 600 } }
+                    labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 10, font: { size: 11, weight: 600 } }
                 }
             },
-            cutout: '70%'
+            cutout: '68%'
         }
     });
 });
