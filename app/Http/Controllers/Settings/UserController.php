@@ -76,6 +76,41 @@ class UserController extends Controller
     }
 
     /**
+     * Apakah operator yang lagi login adalah superadmin global?
+     * Cuma superadmin yang boleh assign role superadmin & manage user lintas tenant.
+     */
+    protected function operatorIsSuperadmin(): bool
+    {
+        $u = auth()->user();
+        return $u && $u->role && $u->role->name === Role::SUPERADMIN;
+    }
+
+    /**
+     * Daftar role yang boleh di-assign operator. Tenant admin dibatasi —
+     * gak boleh promote user jadi superadmin.
+     */
+    protected function assignableRoles()
+    {
+        $names = $this->operatorIsSuperadmin()
+            ? Role::STAFF_ROLES
+            : array_diff(Role::STAFF_ROLES, [Role::SUPERADMIN]);
+        return Role::whereIn('name', $names)->orderBy('id')->get();
+    }
+
+    /**
+     * Cegah role yang gak boleh di-assign masuk lewat form (defensive guard
+     * — kalau form di-tamper, kita tetep tolak di server).
+     */
+    protected function ensureRoleAssignable(?Role $role): void
+    {
+        if (!$role) abort(422, 'Role tidak valid.');
+        $allowed = $this->assignableRoles()->pluck('name')->all();
+        if (!in_array($role->name, $allowed, true)) {
+            abort(403, 'Anda tidak berwenang menetapkan role ini.');
+        }
+    }
+
+    /**
      * Pastikan target user berada di tenant yang sama dengan operator
      * yang lagi login. Superadmin global di-bypass.
      */
@@ -90,7 +125,7 @@ class UserController extends Controller
     public function create(): View
     {
         return view('settings.users.create', [
-            'roles' => Role::whereIn('name', Role::STAFF_ROLES)->orderBy('id')->get(),
+            'roles' => $this->assignableRoles(),
         ]);
     }
 
@@ -108,8 +143,11 @@ class UserController extends Controller
         if (!$role || !in_array($role->name, Role::STAFF_ROLES, true)) {
             return back()->with('error', 'Role tidak valid untuk staff.')->withInput();
         }
+        $this->ensureRoleAssignable($role);
 
-        $plain = $data['password'] ?: Str::password(10, true, true, false, false);
+        $plain = !empty($data['password'])
+            ? $data['password']
+            : Str::password(10, true, true, false, false);
 
         $user = User::create([
             'name'      => $data['name'],
@@ -129,10 +167,19 @@ class UserController extends Controller
     public function edit(User $user): View
     {
         $this->ensureSameTenant($user);
+        // Tenant admin gak boleh edit user superadmin (kalo gak akan bisa demote dia).
+        if ($user->isSuperAdmin() && !$this->operatorIsSuperadmin()) {
+            abort(403, 'Tidak berwenang mengedit user superadmin.');
+        }
         $isCustomer = $user->role && $user->role->name === Role::CUSTOMER;
+        // Untuk dropdown role: sertakan role customer kalo target adalah customer
+        // (read-only di view), plus role assignable buat operator.
+        $roleList = $isCustomer
+            ? Role::orderBy('id')->get()
+            : $this->assignableRoles();
         return view('settings.users.edit', [
             'user'       => $user->load(['role', 'customerProfile']),
-            'roles'      => Role::orderBy('id')->get(),
+            'roles'      => $roleList,
             'isCustomer' => $isCustomer,
         ]);
     }
@@ -140,6 +187,10 @@ class UserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $this->ensureSameTenant($user);
+        // Tenant admin gak boleh edit superadmin existing.
+        if ($user->isSuperAdmin() && !$this->operatorIsSuperadmin()) {
+            abort(403, 'Tidak berwenang mengedit user superadmin.');
+        }
         $data = $request->validate([
             'name'    => ['required', 'string', 'max:120'],
             'email'   => ['required', 'email', 'max:120', Rule::unique('users', 'email')->ignore($user->id)],
@@ -151,6 +202,10 @@ class UserController extends Controller
         // Customer accounts: role tidak boleh diubah dari sini (otomatis dari customer).
         if ($user->role && $user->role->name === Role::CUSTOMER && $role && $role->name !== Role::CUSTOMER) {
             return back()->with('error', 'Role akun pelanggan tidak boleh diubah ke staff. Buat user staff baru.')->withInput();
+        }
+        // Cegah tenant admin assign role superadmin via form-tampering.
+        if ($role && $role->name !== Role::CUSTOMER) {
+            $this->ensureRoleAssignable($role);
         }
 
         // Cegah superadmin terakhir di-demote / di-nonaktifkan.
@@ -179,6 +234,9 @@ class UserController extends Controller
     public function resetPassword(User $user): RedirectResponse
     {
         $this->ensureSameTenant($user);
+        if ($user->isSuperAdmin() && !$this->operatorIsSuperadmin()) {
+            abort(403, 'Tidak berwenang mereset password superadmin.');
+        }
         $plain = Str::password(10, true, true, false, false);
         $user->update(['password' => Hash::make($plain)]);
         return back()->with('success', "Password {$user->name} di-reset. Password baru: {$plain}");
@@ -187,6 +245,9 @@ class UserController extends Controller
     public function toggleActive(User $user): RedirectResponse
     {
         $this->ensureSameTenant($user);
+        if ($user->isSuperAdmin() && !$this->operatorIsSuperadmin()) {
+            abort(403, 'Tidak berwenang mengubah status superadmin.');
+        }
         if ($user->isSuperAdmin() && $user->is_active) {
             $stillSuper = User::whereHas('role', fn($w) => $w->where('name', Role::SUPERADMIN))
                 ->where('id', '!=', $user->id)
@@ -204,6 +265,9 @@ class UserController extends Controller
     public function destroy(Request $request, User $user): RedirectResponse
     {
         $this->ensureSameTenant($user);
+        if ($user->isSuperAdmin() && !$this->operatorIsSuperadmin()) {
+            abort(403, 'Tidak berwenang menghapus superadmin.');
+        }
         if ($user->id === $request->user()->id) {
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
         }
