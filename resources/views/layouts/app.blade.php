@@ -97,7 +97,7 @@
             </div>
         </div>
 
-        <nav class="flex-1 overflow-y-auto mt-2 text-sm scrollbar-thin">
+        <nav id="ah-sidebar-nav" class="flex-1 overflow-y-auto mt-2 text-sm scrollbar-thin">
             @php($u = auth()->user())
             @php($role = $u?->role?->name)
 
@@ -312,6 +312,34 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') document.body.classList.remove('ah-sidebar-open');
         });
+
+        // Persist sidebar scroll position across page nav (sessionStorage).
+        // Tanpa ini, tiap klik menu sidebar reset ke top — annoying kalau
+        // menu lo udah panjang & lo lagi di item bawah.
+        const SIDEBAR_KEY = 'ah_sidebar_scroll';
+        const navEl = document.getElementById('ah-sidebar-nav');
+        if (navEl) {
+            // Restore sebelum first paint biar gak ada flash.
+            const saved = parseInt(sessionStorage.getItem(SIDEBAR_KEY) || '0', 10);
+            if (saved > 0) navEl.scrollTop = saved;
+
+            // Save tiap scroll (debounced).
+            let saveTimer = null;
+            navEl.addEventListener('scroll', () => {
+                clearTimeout(saveTimer);
+                saveTimer = setTimeout(() => {
+                    sessionStorage.setItem(SIDEBAR_KEY, String(navEl.scrollTop));
+                }, 80);
+            }, { passive: true });
+
+            // Save on klik link sebelum navigasi (jaga2 kalau scroll handler
+            // belum sempat fire).
+            navEl.querySelectorAll('a').forEach(a => {
+                a.addEventListener('click', () => {
+                    sessionStorage.setItem(SIDEBAR_KEY, String(navEl.scrollTop));
+                });
+            });
+        }
     })();
 </script>
 @stack('scripts')
