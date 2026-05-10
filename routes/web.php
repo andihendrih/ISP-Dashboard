@@ -194,6 +194,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/tenants',                  [SettingsTenantController::class, 'index'])->name('tenants.index');
         Route::get('/tenants/create',           [SettingsTenantController::class, 'create'])->name('tenants.create');
         Route::post('/tenants',                 [SettingsTenantController::class, 'store'])->name('tenants.store');
+        Route::get('/tenants/delete',           [SettingsTenantController::class, 'deleteForm'])->name('tenants.delete-form');
+        Route::post('/tenants/delete',          [SettingsTenantController::class, 'deleteExecute'])->name('tenants.delete-execute');
         Route::get('/tenants/{tenant}/edit',    [SettingsTenantController::class, 'edit'])->name('tenants.edit');
         Route::put('/tenants/{tenant}',         [SettingsTenantController::class, 'update'])->name('tenants.update');
         Route::delete('/tenants/{tenant}',      [SettingsTenantController::class, 'destroy'])->name('tenants.destroy');

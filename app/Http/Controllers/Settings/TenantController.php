@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -252,7 +253,7 @@ class TenantController extends Controller
         if ($hasData) {
             return back()->with('error',
                 "Tenant {$tenant->name} masih punya data (customer/invoice/user). " .
-                "Hapus / migrate data tersebut dulu sebelum delete tenant."
+                "Hapus / migrate data tersebut dulu sebelum delete tenant, atau pakai 'Hapus Tenant' → mode Cascade."
             );
         }
 
@@ -260,6 +261,195 @@ class TenantController extends Controller
         $tenant->delete();
         return redirect()->route('settings.tenants.index')
             ->with('success', "Tenant {$name} dihapus.");
+    }
+
+    /**
+     * Halaman terpisah "Hapus Tenant" (link dari header list).
+     * Superadmin pilih tenant dari dropdown, system tampilin breakdown
+     * data yg bakal ke-affect, dan harus type-to-confirm code tenant
+     * sebelum bisa eksekusi delete.
+     */
+    public function deleteForm(Request $request): View
+    {
+        $tenants = Tenant::where('code', '!=', Tenant::DEFAULT_CODE)
+            ->orderBy('name')
+            ->get();
+
+        $selected = null;
+        $stats = null;
+        if ($id = $request->query('tenant_id')) {
+            $selected = Tenant::find($id);
+            if ($selected && $selected->code !== Tenant::DEFAULT_CODE) {
+                $stats = $this->tenantDataStats($selected);
+            } else {
+                $selected = null;
+            }
+        }
+
+        return view('settings.tenants.delete', [
+            'tenants'  => $tenants,
+            'selected' => $selected,
+            'stats'    => $stats,
+        ]);
+    }
+
+    /**
+     * Eksekusi delete dari halaman dedicated. Dua mode:
+     *   - mode=safe: cuma boleh delete tenant kosong (sama dengan destroy()).
+     *   - mode=cascade: hapus tenant + SEMUA data terkait (customers,
+     *     invoices, users, devices, vouchers, tickets, dll). Wajib
+     *     type-to-confirm code tenant.
+     */
+    public function deleteExecute(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'tenant_id'    => ['required', 'integer', 'exists:tenants,id'],
+            'mode'         => ['required', Rule::in(['safe', 'cascade'])],
+            'confirm_code' => ['required', 'string'],
+        ]);
+
+        $tenant = Tenant::findOrFail($data['tenant_id']);
+
+        if ($tenant->code === Tenant::DEFAULT_CODE) {
+            return back()->with('error', "Tenant default '{$tenant->code}' tidak boleh dihapus.");
+        }
+
+        // Type-to-confirm: lo harus ngetik code tenant persis biar gak
+        // kepencet hapus tenant yg salah.
+        if (strcasecmp(trim($data['confirm_code']), $tenant->code) !== 0) {
+            return back()
+                ->withInput()
+                ->with('error', "Konfirmasi gagal: ketik code tenant persis '{$tenant->code}' untuk konfirmasi.");
+        }
+
+        $name = $tenant->name;
+        $code = $tenant->code;
+
+        if ($data['mode'] === 'safe') {
+            $hasData = DB::table('customer_profiles')->where('tenant_id', $tenant->id)->exists()
+                || DB::table('invoices')->where('tenant_id', $tenant->id)->exists()
+                || DB::table('users')->where('tenant_id', $tenant->id)->where('id', '!=', auth()->id())->exists();
+            if ($hasData) {
+                return back()->withInput()->with('error',
+                    "Tenant {$tenant->name} masih punya data. Pakai mode Cascade kalau lo memang mau hapus semuanya, atau migrate data dulu."
+                );
+            }
+            $tenant->delete();
+            return redirect()->route('settings.tenants.index')
+                ->with('success', "Tenant {$name} ({$code}) dihapus.");
+        }
+
+        // mode=cascade: hapus semua data tenant.
+        $deleted = $this->cascadeDeleteTenantData($tenant);
+        $tenant->delete();
+
+        $summary = collect($deleted)
+            ->map(fn ($cnt, $tbl) => "{$tbl}={$cnt}")
+            ->implode(', ');
+
+        return redirect()->route('settings.tenants.index')
+            ->with('success', "Tenant {$name} ({$code}) dan semua datanya dihapus. Total: {$summary}.");
+    }
+
+    /**
+     * Hitung data yang ke-affect kalau tenant di-cascade-delete.
+     * Dipakai di halaman konfirmasi untuk transparansi ke superadmin.
+     */
+    protected function tenantDataStats(Tenant $tenant): array
+    {
+        $tables = $this->cascadeTables();
+        $stats = [];
+        foreach ($tables as $tbl) {
+            $stats[$tbl] = DB::table($tbl)->where('tenant_id', $tenant->id)->count();
+        }
+        // RADIUS rows yang ke-link ke customer tenant ini (radcheck/radreply
+        // tidak punya tenant_id, jadi kita match by username).
+        $custUsernames = DB::table('customer_profiles')
+            ->where('tenant_id', $tenant->id)
+            ->whereNotNull('radius_username')
+            ->pluck('radius_username')
+            ->all();
+        if (!empty($custUsernames)) {
+            foreach (['radcheck', 'radreply', 'radusergroup'] as $rt) {
+                if (Schema::hasTable($rt)) {
+                    $stats[$rt] = DB::table($rt)->whereIn('username', $custUsernames)->count();
+                } else {
+                    $stats[$rt] = 0;
+                }
+            }
+        } else {
+            $stats['radcheck'] = $stats['radreply'] = $stats['radusergroup'] = 0;
+        }
+        return $stats;
+    }
+
+    /**
+     * Daftar tabel yang punya kolom tenant_id (dipakai sebagai cascade
+     * target). Urutannya nggak penting karena FK constraint udah
+     * ON DELETE RESTRICT di tenant_id, jadi kita hapus child rows dulu
+     * sebelum tenant. Tabel yang relasinya antar-row di tenant yg sama
+     * (e.g. ticket_comments → support_tickets) di-handle pakai cascade
+     * lewat DBMS, atau di-delete bareng karena query hapus by tenant_id.
+     */
+    protected function cascadeTables(): array
+    {
+        return [
+            'ticket_comments',
+            'support_tickets',
+            'notification_logs',
+            'notification_settings',
+            'payments',
+            'invoices',
+            'service_plans',
+            'device_assignments',
+            'devices_inventory',
+            'genieacs_devices',
+            'devices_mikrotik',
+            'hotspot_vouchers',
+            'voucher_batches',
+            'audit_logs',
+            'customer_profiles',
+            'users',
+        ];
+    }
+
+    /**
+     * Cascade delete: hapus semua row yang punya tenant_id = $tenant->id
+     * di tabel-tabel cascadeTables(), plus radcheck/radreply/radusergroup
+     * yg ke-link ke radius_username pelanggan tenant ini.
+     * Return array tbl => deleted_count.
+     */
+    protected function cascadeDeleteTenantData(Tenant $tenant): array
+    {
+        $deleted = [];
+        DB::transaction(function () use ($tenant, &$deleted) {
+            // 1. Cleanup RADIUS rows by username dulu sebelum customer_profiles
+            //    di-hapus (kalo customer dihapus dulu, kita hilang reference
+            //    radius_username-nya).
+            $custUsernames = DB::table('customer_profiles')
+                ->where('tenant_id', $tenant->id)
+                ->whereNotNull('radius_username')
+                ->pluck('radius_username')
+                ->all();
+            if (!empty($custUsernames)) {
+                foreach (['radcheck', 'radreply', 'radusergroup'] as $rt) {
+                    if (Schema::hasTable($rt)) {
+                        $deleted[$rt] = DB::table($rt)->whereIn('username', $custUsernames)->delete();
+                    }
+                }
+            }
+
+            // 2. Hapus per-tabel tenant_id (urutan child → parent supaya
+            //    FK constraint nggak rewel kalau ada).
+            foreach ($this->cascadeTables() as $tbl) {
+                if (!Schema::hasTable($tbl)) continue;
+                $cnt = DB::table($tbl)->where('tenant_id', $tenant->id)->delete();
+                if ($cnt > 0) {
+                    $deleted[$tbl] = $cnt;
+                }
+            }
+        });
+        return $deleted;
     }
 
     /**

@@ -8,7 +8,10 @@
         <h1 class="text-xl sm:text-2xl font-bold">Tenants</h1>
         <p class="text-sm text-ink/55">Kelola penyewa portal — tiap tenant adalah ISP company terpisah dengan datanya sendiri.</p>
     </div>
-    <a href="{{ route('settings.tenants.create') }}" class="px-4 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black text-sm whitespace-nowrap self-start sm:self-auto">+ Tambah Tenant</a>
+    <div class="flex items-center gap-2 self-start sm:self-auto">
+        <a href="{{ route('settings.tenants.create') }}" class="px-4 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black text-sm whitespace-nowrap">+ Tambah Tenant</a>
+        <a href="{{ route('settings.tenants.delete-form') }}" class="px-4 py-2 bg-rose-100 text-rose-900 border border-rose-200 rounded-xl shadow-card hover:bg-rose-200 text-sm whitespace-nowrap">Hapus Tenant</a>
+    </div>
 </div>
 
 @if(session('success'))
