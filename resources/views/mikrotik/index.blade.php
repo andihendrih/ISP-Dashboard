@@ -25,7 +25,7 @@
 <form method="POST" action="{{ route('mikrotik.store') }}" class="bg-white p-6 rounded-xl border border-cream-deep/60 max-w-2xl space-y-3">
     @csrf
     <div class="font-semibold">Tambah Device</div>
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input name="name"     placeholder="Nama"            class="border border-ink/10 rounded-lg px-3 py-2" required>
         <input name="host"     placeholder="Host / IP"        class="border border-ink/10 rounded-lg px-3 py-2 font-mono" required>
         <input name="api_port" placeholder="API Port (8728)"  class="border border-ink/10 rounded-lg px-3 py-2" type="number">
