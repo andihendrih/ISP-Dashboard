@@ -158,17 +158,20 @@ Route::middleware('auth')->group(function () {
         Route::post('/snmp/{id}/poll',       [SnmpController::class, 'poll'])->name('snmp.poll');
         Route::get('/snmp/{id}/history.json', [SnmpController::class, 'history'])->name('snmp.history');
 
-        /* GenieACS */
-        Route::get('/genieacs',                       [GenieacsController::class, 'index'])->name('genieacs.index');
-        Route::post('/genieacs/sync',                 [GenieacsController::class, 'sync'])->name('genieacs.sync');
-        Route::post('/genieacs/{deviceId}/reboot',    [GenieacsController::class, 'reboot'])
-            ->where('deviceId', '.*')->name('genieacs.reboot');
-        Route::post('/genieacs/{deviceId}/refresh',   [GenieacsController::class, 'refresh'])
-            ->where('deviceId', '.*')->name('genieacs.refresh');
-        Route::post('/genieacs/{deviceId}/ssid',      [GenieacsController::class, 'setSsid'])
-            ->where('deviceId', '.*')->name('genieacs.ssid');
-        Route::post('/genieacs/{deviceId}/password',  [GenieacsController::class, 'setPassword'])
-            ->where('deviceId', '.*')->name('genieacs.password');
+        /* GenieACS / TR-069 Management */
+        Route::get('/genieacs',                          [GenieacsController::class, 'index'])->name('genieacs.index');
+        Route::get('/genieacs/export.csv',               [GenieacsController::class, 'exportCsv'])->name('genieacs.export-csv');
+        Route::post('/genieacs/sync',                    [GenieacsController::class, 'sync'])->name('genieacs.sync');
+        Route::get('/genieacs/{device}',                 [GenieacsController::class, 'show'])->name('genieacs.show');
+        Route::post('/genieacs/{device}/reboot',         [GenieacsController::class, 'reboot'])->name('genieacs.reboot');
+        Route::post('/genieacs/{device}/refresh',        [GenieacsController::class, 'refresh'])->name('genieacs.refresh');
+        Route::post('/genieacs/{device}/factory-reset',  [GenieacsController::class, 'factoryReset'])->name('genieacs.factory-reset');
+        Route::post('/genieacs/{device}/ssid',           [GenieacsController::class, 'setSsid'])->name('genieacs.ssid');
+        Route::post('/genieacs/{device}/password',       [GenieacsController::class, 'setPassword'])->name('genieacs.password');
+        Route::post('/genieacs/{device}/pppoe',          [GenieacsController::class, 'setPppoe'])->name('genieacs.pppoe');
+        Route::post('/genieacs/{device}/wan-ip',         [GenieacsController::class, 'setWanIp'])->name('genieacs.wan-ip');
+        Route::post('/genieacs/{device}/suspend-wan',    [GenieacsController::class, 'suspendWan'])->name('genieacs.suspend-wan');
+        Route::post('/genieacs/{device}/wifi-security',  [GenieacsController::class, 'setWifiSecurity'])->name('genieacs.wifi-security');
     });
 
 });
