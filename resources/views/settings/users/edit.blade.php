@@ -53,6 +53,15 @@
         @endif
     </div>
 
+    <div class="border-t border-cream-deep/60 pt-3">
+        <label class="block text-xs text-ink/55 font-medium mb-1">Password Baru <span class="text-ink/40 font-normal">(opsional)</span></label>
+        <div class="flex gap-2">
+            <input type="password" id="newpwd" name="password" minlength="6" maxlength="64" autocomplete="new-password" placeholder="Kosongkan kalau gak mau ganti" class="flex-1 min-w-0 border border-ink/10 rounded-xl text-sm px-3 py-2 font-mono">
+            <button type="button" onclick="togglePwdView()" class="px-3 py-2 bg-cream-deep/70 hover:bg-cream-deep rounded-xl text-sm shrink-0" title="Tampilkan / sembunyikan">👁</button>
+        </div>
+        <p class="text-xs text-ink/45 mt-1">Min 6 karakter. Kosongkan kalau lo gak mau ganti password (data lain tetep ke-update). Beda dari tombol "Reset Password" di bawah yang auto-generate random.</p>
+    </div>
+
     <label class="inline-flex items-center gap-2">
         <input type="hidden" name="is_active" value="0">
         <input type="checkbox" name="is_active" value="1" {{ old('is_active', $user->is_active) ? 'checked' : '' }}>
@@ -66,9 +75,17 @@
 </form>
 
 <div class="mt-4 max-w-2xl">
+    <p class="text-xs text-ink/55 mb-2">Atau auto-generate password random (akan ditampilkan sekali setelah simpan):</p>
     <form method="POST" action="{{ route('settings.users.reset', $user) }}" onsubmit="return confirm('Reset password user ini? Password baru akan ditampilkan setelah simpan.')">
         @csrf
-        <button class="px-4 py-2 bg-amber-100 text-amber-900 hover:bg-amber-200 rounded-xl text-sm">Reset Password</button>
+        <button class="px-4 py-2 bg-amber-100 text-amber-900 hover:bg-amber-200 rounded-xl text-sm">Reset Password (Auto-Generate)</button>
     </form>
 </div>
+
+<script>
+function togglePwdView() {
+    var el = document.getElementById('newpwd');
+    el.type = el.type === 'password' ? 'text' : 'password';
+}
+</script>
 @endsection

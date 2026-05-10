@@ -69,9 +69,19 @@
             <label class="text-sm font-medium">Rate Limit</label>
             <input name="rate_limit" value="{{ old('rate_limit', $row->rate_limit) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2">
         </div>
-        <div>
-            <label class="text-sm font-medium">Username</label>
-            <input name="radius_username" value="{{ old('radius_username', $row->radius_username) }}" placeholder="ahnet_username" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+        <div class="min-w-0">
+            <label class="text-sm font-medium">Username RADIUS</label>
+            @php
+                $currentUser = old('radius_username', $row->radius_username);
+                $currentSuffix = (\Illuminate\Support\Str::startsWith(strtolower((string) $currentUser), strtolower((string) $tenantPrefix)))
+                    ? substr((string) $currentUser, strlen((string) $tenantPrefix))
+                    : (string) $currentUser;
+            @endphp
+            <div class="flex items-stretch mt-1 max-w-full">
+                <span class="px-2 sm:px-3 py-2 bg-cream-deep/70 border border-r-0 border-ink/10 rounded-l-lg font-mono text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 select-none">{{ $tenantPrefix }}</span>
+                <input name="radius_username_suffix" value="{{ $currentSuffix }}" placeholder="kosongkan = auto" class="flex-1 min-w-0 border border-ink/10 rounded-r-lg px-3 py-2 font-mono text-sm">
+            </div>
+            <p class="text-xs text-ink/45 mt-1">Prefix tenant <span class="font-mono font-semibold">{{ $tenantPrefix }}</span> dipaksa otomatis. Suffix bebas.</p>
         </div>
         <div>
             <div class="flex items-center justify-between">

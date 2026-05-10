@@ -42,10 +42,18 @@
                 <input name="code_length" type="number" min="4" max="12" required value="{{ old('code_length', 6) }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
                 <p class="text-xs text-ink/45 mt-1">Default 6 karakter (mis. <code>9K3MX7</code>).</p>
             </div>
-            <div>
+            <div class="min-w-0">
                 <label class="text-sm font-medium">Prefix <span class="text-ink/40 font-normal">(opsional)</span></label>
-                <input name="prefix" maxlength="8" value="{{ old('prefix') }}" placeholder="AHN" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
-                <p class="text-xs text-ink/45 mt-1">Mis. <code>AHN</code> → voucher jadi <code>AHN9K3MX7</code>.</p>
+                @if(!empty($tenantPrefix))
+                    <div class="flex items-stretch mt-1 max-w-full">
+                        <span class="px-2 sm:px-3 py-2 bg-cream-deep/70 border border-r-0 border-ink/10 rounded-l-lg font-mono text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 select-none">{{ $tenantPrefix }}</span>
+                        <input name="prefix" maxlength="8" value="{{ old('prefix') }}" placeholder="AHN" class="flex-1 min-w-0 border border-ink/10 rounded-r-lg px-3 py-2 font-mono text-sm">
+                    </div>
+                    <p class="text-xs text-ink/45 mt-1">Voucher otomatis diawali <span class="font-mono font-semibold">{{ $tenantPrefix }}</span> (prefix tenant). Lo bisa kasih prefix tambahan atau kosongin. Mis. <code>{{ $tenantPrefix }}9K3MX7</code> atau <code>{{ $tenantPrefix }}AHN9K3</code>.</p>
+                @else
+                    <input name="prefix" maxlength="8" value="{{ old('prefix') }}" placeholder="AHN" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
+                    <p class="text-xs text-ink/45 mt-1">Mis. <code>AHN</code> → voucher jadi <code>AHN9K3MX7</code>.</p>
+                @endif
             </div>
             <div>
                 <label class="text-sm font-medium">Expiration <span class="text-ink/40 font-normal">(opsional)</span></label>

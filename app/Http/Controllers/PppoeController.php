@@ -8,6 +8,7 @@ use App\Models\Radius\Radcheck;
 use App\Models\Radius\Radusergroup;
 use App\Services\MikrotikService;
 use App\Services\RadiusService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -22,19 +23,30 @@ class PppoeController extends Controller
 
     public function index(): View
     {
+        $ctx = app(TenantContext::class);
+        $tenantPrefix = $ctx->shouldScope() ? $ctx->radiusPrefix() : null;
+
         try {
-            $rows = Radcheck::query()
+            $q = Radcheck::query()
                 ->where('attribute', 'Cleartext-Password')
-                ->orderByDesc('id')
-                ->paginate(25);
+                ->orderByDesc('id');
+
+            // Multi-tenant: kalau ada tenant aktif, filter username dengan
+            // prefix tenant. Superadmin global (no scope) liat semua.
+            if ($tenantPrefix) {
+                $q->where('username', 'like', $tenantPrefix . '%');
+            }
+
+            $rows = $q->paginate(25);
         } catch (\Throwable $e) {
             Log::warning('PPPoE index radius read failed: ' . $e->getMessage());
             $rows = collect();
         }
 
         return view('pppoe.index', [
-            'rows'    => $rows,
-            'devices' => DeviceMikrotik::where('is_active', true)->get(),
+            'rows'         => $rows,
+            'devices'      => DeviceMikrotik::where('is_active', true)->get(),
+            'tenantPrefix' => $tenantPrefix,
         ]);
     }
 
@@ -61,6 +73,15 @@ class PppoeController extends Controller
 
         $username = !empty($data['username'] ?? null) ? $data['username'] : $this->radius->generatePppoeUsername($data['full_name']);
         $password = !empty($data['password'] ?? null) ? $data['password'] : $this->radius->generatePppoePassword();
+
+        // Multi-tenant: paksa prefix tenant kalau lagi di tenant context.
+        $ctx = app(TenantContext::class);
+        if ($ctx->shouldScope()) {
+            $prefix = $ctx->radiusPrefix();
+            if (!\Illuminate\Support\Str::startsWith(strtolower($username), strtolower($prefix))) {
+                $username = $prefix . preg_replace('/^[A-Za-z0-9_-]+_/', '', $username);
+            }
+        }
 
         $this->radius->createPppoeUser(
             $username,
@@ -128,6 +149,7 @@ class PppoeController extends Controller
 
     public function destroy(string $username): RedirectResponse
     {
+        $this->guardTenantUsername($username);
         $this->radius->deleteUser($username);
         CustomerProfile::where('radius_username', $username)->delete();
         return back()->with('success', "User {$username} dihapus.");
@@ -135,8 +157,24 @@ class PppoeController extends Controller
 
     public function resetPassword(Request $request, string $username): RedirectResponse
     {
+        $this->guardTenantUsername($username);
         $newPwd = $request->input('password') ?: $this->radius->generatePppoePassword();
         $this->radius->setPassword($username, $newPwd);
         return back()->with('success', "Password {$username} di-reset menjadi: {$newPwd}");
+    }
+
+    /**
+     * Multi-tenant guard: tolak operasi pada PPPoE username yang bukan
+     * milik tenant ini. Tenant admin gak boleh hapus/reset user tenant
+     * lain — meski tau username-nya & ngirim request manual.
+     */
+    protected function guardTenantUsername(string $username): void
+    {
+        $ctx = app(TenantContext::class);
+        if (!$ctx->shouldScope()) return; // superadmin global
+        $prefix = $ctx->radiusPrefix();
+        if (!\Illuminate\Support\Str::startsWith(strtolower($username), strtolower($prefix))) {
+            abort(403, "User PPPoE '{$username}' bukan milik tenant lo.");
+        }
     }
 }

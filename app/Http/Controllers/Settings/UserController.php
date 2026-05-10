@@ -192,9 +192,10 @@ class UserController extends Controller
             abort(403, 'Tidak berwenang mengedit user superadmin.');
         }
         $data = $request->validate([
-            'name'    => ['required', 'string', 'max:120'],
-            'email'   => ['required', 'email', 'max:120', Rule::unique('users', 'email')->ignore($user->id)],
-            'role_id' => ['required', 'integer', 'exists:roles,id'],
+            'name'     => ['required', 'string', 'max:120'],
+            'email'    => ['required', 'email', 'max:120', Rule::unique('users', 'email')->ignore($user->id)],
+            'role_id'  => ['required', 'integer', 'exists:roles,id'],
+            'password' => ['nullable', 'string', 'min:6', 'max:64'],
             'is_active'=> ['sometimes', 'boolean'],
         ]);
 
@@ -221,14 +222,29 @@ class UserController extends Controller
             }
         }
 
-        $user->update([
+        $payload = [
             'name'      => $data['name'],
             'email'     => $data['email'],
             'role_id'   => $role->id,
             'is_active' => (bool) ($data['is_active'] ?? false),
-        ]);
+        ];
 
-        return redirect()->route('settings.users.index')->with('success', "User {$user->name} di-update.");
+        // Manual password set (opsional). Kosong = password tetep, isi =
+        // ganti manual sesuai input. Beda dari resetPassword() yang
+        // auto-generate random.
+        $passwordChanged = false;
+        if (!empty($data['password'])) {
+            $payload['password'] = Hash::make($data['password']);
+            $passwordChanged = true;
+        }
+
+        $user->update($payload);
+
+        $msg = "User {$user->name} di-update.";
+        if ($passwordChanged) {
+            $msg .= ' Password berhasil di-set manual.';
+        }
+        return redirect()->route('settings.users.index')->with('success', $msg);
     }
 
     public function resetPassword(User $user): RedirectResponse

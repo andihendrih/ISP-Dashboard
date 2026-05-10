@@ -25,7 +25,7 @@
     </div>
 @endif
 
-<form method="POST" action="{{ route('customers.store') }}" class="bg-white rounded-3xl shadow-card p-6 max-w-4xl space-y-5">
+<form method="POST" action="{{ route('customers.store') }}" class="bg-white rounded-3xl shadow-card p-4 sm:p-6 max-w-4xl space-y-5">
     @csrf
 
     {{-- Identitas --}}
@@ -95,16 +95,19 @@
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="text-sm font-medium">Username</label>
-                <input name="radius_username" value="{{ old('radius_username') }}" placeholder="kosongkan = auto-generate" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
-                <p class="text-xs text-ink/45 mt-1">Otomatis dibuat dari nama (mis. <span class="font-mono">ahnet_budisantoso&amp;42</span>). Bisa diisi manual.</p>
+            <div class="min-w-0">
+                <label class="text-sm font-medium">Username RADIUS</label>
+                <div class="flex items-stretch mt-1 max-w-full">
+                    <span class="px-2 sm:px-3 py-2 bg-cream-deep/70 border border-r-0 border-ink/10 rounded-l-lg font-mono text-xs sm:text-sm font-semibold whitespace-nowrap shrink-0 select-none">{{ $tenantPrefix }}</span>
+                    <input name="radius_username_suffix" value="{{ old('radius_username_suffix') }}" placeholder="kosongkan = auto" class="flex-1 min-w-0 border border-ink/10 rounded-r-lg px-3 py-2 font-mono text-sm">
+                </div>
+                <p class="text-xs text-ink/45 mt-1">Username otomatis diawali <span class="font-mono font-semibold">{{ $tenantPrefix }}</span>. Lo cuma ngetik suffix (mis. <span class="font-mono">budisantoso42</span>). Kosongkan untuk auto-generate.</p>
             </div>
-            <div>
-                <label class="text-sm font-medium">Password</label>
-                <div class="flex gap-2 mt-1">
-                    <input name="radius_password" id="rpw" value="{{ old('radius_password') }}" placeholder="kosongkan = auto-generate" class="flex-1 border border-ink/10 rounded-lg px-3 py-2 font-mono">
-                    <button type="button" onclick="genPwd()" class="px-3 py-2 bg-cream-deep/70 hover:bg-cream-deep rounded-lg text-sm">🎲</button>
+            <div class="min-w-0">
+                <label class="text-sm font-medium">Password RADIUS</label>
+                <div class="flex gap-2 mt-1 max-w-full">
+                    <input name="radius_password" id="rpw" value="{{ old('radius_password') }}" placeholder="kosongkan = auto" class="flex-1 min-w-0 border border-ink/10 rounded-lg px-3 py-2 font-mono text-sm">
+                    <button type="button" onclick="genPwd()" class="px-3 py-2 bg-cream-deep/70 hover:bg-cream-deep rounded-lg text-sm shrink-0">🎲</button>
                 </div>
                 <p class="text-xs text-ink/45 mt-1">Random 10 karakter. Klik 🎲 untuk regenerate.</p>
             </div>

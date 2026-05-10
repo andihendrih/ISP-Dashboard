@@ -7,9 +7,11 @@ use App\Models\DeviceMikrotik;
 use App\Models\ServicePlan;
 use App\Services\CustomerAccountService;
 use App\Services\RadiusService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class CustomerController extends Controller
@@ -44,7 +46,55 @@ class CustomerController extends Controller
             'plans'       => ServicePlan::where('is_active', true)->orderBy('name')->get(),
             'suggestCode' => $this->nextCustomerCode(),
             'radiusGroups'=> $this->safeRadiusGroups(),
+            'tenantPrefix'=> app(TenantContext::class)->radiusPrefix(),
         ]);
+    }
+
+    /**
+     * Multi-tenant: paksa username RADIUS punya prefix tenant.
+     *
+     *   - Form pakai input "radius_username_suffix" yang cuma berisi suffix.
+     *     Controller assemble jadi <prefix><suffix> sebelum di-store.
+     *   - Kalau form lama / API masih kirim radius_username langsung, kita
+     *     enforce prefix juga: kalo udah pakai prefix tenant, biarin; kalo
+     *     gak ada prefix, prepend; kalo prefix tenant lain, ganti prefix.
+     *   - Superadmin global (no tenant context) pakai default prefix
+     *     "ahnet_" atau apapun yg dia ketik (no enforcement).
+     */
+    protected function applyTenantPrefix(array &$data): void
+    {
+        $ctx = app(TenantContext::class);
+        $prefix = $ctx->radiusPrefix();
+        $tenantCode = $ctx->tenantCode();
+
+        // Suffix flow: kalo user pakai field suffix, gabungin dengan prefix.
+        if (isset($data['radius_username_suffix'])) {
+            $suffix = trim((string) $data['radius_username_suffix']);
+            if ($suffix !== '') {
+                // Strip prefix duplikat kalo user-nya ngetik prefix juga.
+                if (Str::startsWith(strtolower($suffix), strtolower($prefix))) {
+                    $suffix = substr($suffix, strlen($prefix));
+                }
+                $data['radius_username'] = $prefix . $suffix;
+            }
+            unset($data['radius_username_suffix']);
+        }
+
+        // Direct username flow: enforce prefix.
+        if (!empty($data['radius_username']) && $tenantCode) {
+            $u = (string) $data['radius_username'];
+            if (!Str::startsWith(strtolower($u), strtolower($prefix))) {
+                // Strip prefix tenant lain kalo ada (e.g. "langit_user" → "user")
+                // pattern <code>_xxx → kita ambil bagian setelah underscore
+                // pertama kalau bagian sebelum-nya alpha_dash dan bukan prefix
+                // tenant ini.
+                if (preg_match('/^([A-Za-z0-9_-]{3,16})_(.+)$/', $u, $m)
+                    && strtolower($m[1]) !== strtolower($tenantCode)) {
+                    $u = $m[2]; // strip prefix tenant lain
+                }
+                $data['radius_username'] = $prefix . $u;
+            }
+        }
     }
 
     public function store(Request $request): RedirectResponse
@@ -64,17 +114,21 @@ class CustomerController extends Controller
             'rate_limit'        => ['nullable', 'string', 'max:64'],
             'status'            => ['required', 'in:active,isolir,free,pending,inactive'],
             'service_type'      => ['required', 'in:pppoe,hotspot'],
-            'radius_username'   => ['nullable', 'string', 'max:120'],
-            'radius_password'   => ['nullable', 'string', 'max:120'],
-            'auto_radius'       => ['sometimes', 'boolean'],
-            'mikrotik_device_id'=> ['nullable', 'integer', 'exists:devices_mikrotik,id'],
-            'joined_at'         => ['nullable', 'date'],
-            'expired_at'        => ['nullable', 'date'],
-            'notes'             => ['nullable', 'string', 'max:2000'],
+            'radius_username'        => ['nullable', 'string', 'max:120'],
+            'radius_username_suffix' => ['nullable', 'string', 'max:120'],
+            'radius_password'        => ['nullable', 'string', 'max:120'],
+            'auto_radius'            => ['sometimes', 'boolean'],
+            'mikrotik_device_id'     => ['nullable', 'integer', 'exists:devices_mikrotik,id'],
+            'joined_at'              => ['nullable', 'date'],
+            'expired_at'             => ['nullable', 'date'],
+            'notes'                  => ['nullable', 'string', 'max:2000'],
         ]);
 
         $autoRadius = (bool) ($data['auto_radius'] ?? true);
         unset($data['auto_radius']);
+
+        // Paksa prefix tenant di radius_username.
+        $this->applyTenantPrefix($data);
 
         $data['customer_code']   = ($data['customer_code'] ?? '') !== '' ? $data['customer_code'] : $this->nextCustomerCode();
         $data['billing_enabled'] = (bool) ($data['billing_enabled'] ?? false);
@@ -173,6 +227,7 @@ class CustomerController extends Controller
             'devices'     => DeviceMikrotik::where('is_active', true)->get(),
             'plans'       => ServicePlan::where('is_active', true)->orderBy('name')->get(),
             'radiusGroups'=> $this->safeRadiusGroups(),
+            'tenantPrefix'=> app(TenantContext::class)->radiusPrefix(),
         ]);
     }
 
@@ -224,12 +279,16 @@ class CustomerController extends Controller
             'rate_limit'        => ['nullable', 'string', 'max:64'],
             'status'            => ['required', 'in:active,isolir,free,pending,inactive'],
             'service_type'      => ['required', 'in:pppoe,hotspot'],
-            'radius_username'   => ['nullable', 'string', 'max:120'],
-            'radius_password'   => ['nullable', 'string', 'max:120'],
-            'mikrotik_device_id'=> ['nullable', 'integer', 'exists:devices_mikrotik,id'],
+            'radius_username'        => ['nullable', 'string', 'max:120'],
+            'radius_username_suffix' => ['nullable', 'string', 'max:120'],
+            'radius_password'        => ['nullable', 'string', 'max:120'],
+            'mikrotik_device_id'     => ['nullable', 'integer', 'exists:devices_mikrotik,id'],
             'expired_at'        => ['nullable', 'date'],
         ]);
         $data['billing_enabled'] = (bool) ($data['billing_enabled'] ?? false);
+
+        // Paksa prefix tenant di radius_username sebelum update.
+        $this->applyTenantPrefix($data);
 
         $oldUsername = $row->radius_username;
         $oldPassword = $row->radius_password;

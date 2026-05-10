@@ -293,7 +293,9 @@ class RadiusService
      */
     public function generatePppoeUsername(string $name, ?string $prefix = null): string
     {
-        $prefix ??= config('ahnet.radius.pppoe_username_prefix');
+        // Multi-tenant: kalau prefix gak di-pass, ambil dari TenantContext.
+        // Tenant aktif → "<tenant_code>_", fallback → config default ("ahnet_").
+        $prefix ??= app(\App\Support\Tenancy\TenantContext::class)->radiusPrefix();
         $slug = Str::slug(Str::lower($name), '');
         $slug = $slug !== '' ? Str::limit($slug, 16, '') : 'user';
         // suffix angka 3 digit (cukup untuk uniqueness saat slug duplikat)

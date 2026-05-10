@@ -79,4 +79,40 @@ class TenantContext
             $this->bypassed = $previous;
         }
     }
+
+    /** Cache tenant code lookup per request (to avoid n+1 select). */
+    protected ?string $tenantCodeCache = null;
+    protected bool $tenantCodeLoaded = false;
+
+    /**
+     * Resolve tenant code (e.g. "ahnet", "padi") for current active tenant.
+     * Returns null kalau gak ada tenant aktif (superadmin global).
+     */
+    public function tenantCode(): ?string
+    {
+        if ($this->tenantCodeLoaded) return $this->tenantCodeCache;
+        $this->tenantCodeLoaded = true;
+        if (!$this->tenantId) return $this->tenantCodeCache = null;
+        try {
+            $this->tenantCodeCache = \DB::table('tenants')->where('id', $this->tenantId)->value('code');
+        } catch (\Throwable $e) {
+            $this->tenantCodeCache = null;
+        }
+        return $this->tenantCodeCache;
+    }
+
+    /**
+     * Prefix yang dipakai untuk username RADIUS, voucher code, dll —
+     * supaya isolasi antar-tenant ke-enforce di level data (RADIUS server
+     * shared antar-tenant, jadi username harus unique global).
+     *
+     * Tenant aktif → "<tenant_code>_" (e.g. "padi_").
+     * Superadmin global / no tenant → fallback config default.
+     */
+    public function radiusPrefix(): string
+    {
+        $code = $this->tenantCode();
+        if ($code) return $code . '_';
+        return (string) config('ahnet.radius.pppoe_username_prefix', 'ahnet_');
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\Radius\Radcheck;
 use App\Models\Radius\Radusergroup;
 use App\Models\VoucherBatch;
 use App\Services\RadiusService;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -25,14 +26,20 @@ class VoucherController extends Controller
         $filterGroup  = $request->query('group');
         $search       = $request->query('q');
 
+        // Multi-tenant: filter voucher by tenant prefix (uppercase tenant
+        // code). Tenant admin cuma bisa lihat voucher milik tenant-nya.
+        // Superadmin global tetap lihat semua.
+        $tenantPrefix = $this->tenantVoucherPrefix();
+
         $sub = Radusergroup::query()
             ->select('username', 'groupname')
             ->where(function ($w) {
                 $w->where('groupname', 'like', 'Hotspot%')->orWhere('groupname', 'like', 'HS_%');
             });
 
-        if ($filterGroup) $sub->where('groupname', $filterGroup);
-        if ($search)      $sub->where('username', 'like', "%{$search}%");
+        if ($tenantPrefix) $sub->where('username', 'like', $tenantPrefix . '%');
+        if ($filterGroup)  $sub->where('groupname', $filterGroup);
+        if ($search)       $sub->where('username', 'like', "%{$search}%");
 
         $rows = $sub->orderBy('username')->paginate(50)->withQueryString();
 
@@ -67,16 +74,19 @@ class VoucherController extends Controller
         if ($filterStatus === 'active')  $enriched = $enriched->reject(fn ($v) => $v['is_expired']);
         if ($filterStatus === 'expired') $enriched = $enriched->filter(fn ($v) => $v['is_expired']);
 
-        // Stats
-        $total = Radusergroup::query()
-            ->where(function ($w) { $w->where('groupname','like','Hotspot%')->orWhere('groupname','like','HS_%'); })
-            ->count();
+        // Stats (di-scope per tenant juga)
+        $totalQ = Radusergroup::query()
+            ->where(function ($w) { $w->where('groupname','like','Hotspot%')->orWhere('groupname','like','HS_%'); });
+        if ($tenantPrefix) $totalQ->where('username', 'like', $tenantPrefix . '%');
+        $total = $totalQ->count();
 
         $expiredCount = Radcheck::where('attribute', 'Expiration')
             ->where('value', '!=', '')
-            ->whereIn('username', function ($q) {
+            ->when($tenantPrefix, fn ($q) => $q->where('username', 'like', $tenantPrefix . '%'))
+            ->whereIn('username', function ($q) use ($tenantPrefix) {
                 $q->select('username')->from('radusergroup')
                   ->where(function ($w) { $w->where('groupname','like','Hotspot%')->orWhere('groupname','like','HS_%'); });
+                if ($tenantPrefix) $q->where('username', 'like', $tenantPrefix . '%');
             })
             ->get()
             ->filter(function ($r) {
@@ -99,12 +109,38 @@ class VoucherController extends Controller
             'filterStatus' => $filterStatus,
             'filterGroup'  => $filterGroup,
             'search'       => $search,
+            'tenantPrefix' => $tenantPrefix,
         ]);
+    }
+
+    /**
+     * Voucher prefix tenant: UPPERCASE tenant code + underscore.
+     * E.g. tenant 'padi' → 'PADI_'. Voucher codes harus diawali ini supaya
+     * isolasi antar-tenant ke-enforce di shared RADIUS.
+     * Returns null kalau superadmin global (no scope) — mereka lihat semua.
+     */
+    protected function tenantVoucherPrefix(): ?string
+    {
+        $ctx = app(TenantContext::class);
+        if (!$ctx->shouldScope()) return null;
+        $code = $ctx->tenantCode();
+        return $code ? strtoupper($code) . '_' : null;
+    }
+
+    /** Multi-tenant guard: tolak operasi pada voucher tenant lain. */
+    protected function guardTenantVoucher(string $username): void
+    {
+        $prefix = $this->tenantVoucherPrefix();
+        if (!$prefix) return; // superadmin global
+        if (!Str::startsWith(strtoupper($username), $prefix)) {
+            abort(403, "Voucher '{$username}' bukan milik tenant lo.");
+        }
     }
 
     /** Hapus voucher (single). */
     public function destroy(string $username): RedirectResponse
     {
+        $this->guardTenantVoucher($username);
         $this->radius->deleteUser($username);
         return back()->with('success', "Voucher {$username} dihapus dari RADIUS.");
     }
@@ -112,10 +148,13 @@ class VoucherController extends Controller
     /** Bulk delete semua voucher yang expired. */
     public function bulkDeleteExpired(): RedirectResponse
     {
+        $tenantPrefix = $this->tenantVoucherPrefix();
         $usernames = Radcheck::where('attribute', 'Expiration')
-            ->whereIn('username', function ($q) {
+            ->when($tenantPrefix, fn ($q) => $q->where('username', 'like', $tenantPrefix . '%'))
+            ->whereIn('username', function ($q) use ($tenantPrefix) {
                 $q->select('username')->from('radusergroup')
                   ->where(function ($w) { $w->where('groupname','like','Hotspot%')->orWhere('groupname','like','HS_%'); });
+                if ($tenantPrefix) $q->where('username', 'like', $tenantPrefix . '%');
             })
             ->get()
             ->filter(function ($r) {
@@ -142,9 +181,10 @@ class VoucherController extends Controller
     /** Halaman generator + history batch. */
     public function generateForm(): View
     {
-        $groups   = $this->safeHotspotGroups();
-        $batches  = VoucherBatch::orderByDesc('id')->limit(20)->get();
-        return view('vouchers.generate', compact('groups', 'batches'));
+        $groups       = $this->safeHotspotGroups();
+        $batches      = VoucherBatch::orderByDesc('id')->limit(20)->get();
+        $tenantPrefix = $this->tenantVoucherPrefix();
+        return view('vouchers.generate', compact('groups', 'batches', 'tenantPrefix'));
     }
 
     /** Generate batch voucher → insert ke RADIUS + simpan metadata batch. */
@@ -161,10 +201,15 @@ class VoucherController extends Controller
 
         $count   = (int) $data['count'];
         $len     = (int) $data['code_length'];
-        $prefix  = strtoupper((string) ($data['prefix'] ?? ''));
+        $userPrefix = strtoupper((string) ($data['prefix'] ?? ''));
         $profile = (string) $data['profile'];
         $days    = (int) ($data['expires_in_days'] ?? 0);
         $expires = $days > 0 ? Carbon::now()->addDays($days) : null;
+
+        // Multi-tenant: paksa prefix tenant di awal voucher code (UPPER_CODE_).
+        // Final format = <TENANT_PREFIX><USER_PREFIX><RANDOM>.
+        $forcedTenantPrefix = $this->tenantVoucherPrefix() ?? '';
+        $fullPrefix = $forcedTenantPrefix . $userPrefix;
 
         // Generate codes (avoid collision with existing radcheck.username)
         $existing = Radcheck::where('attribute', 'Cleartext-Password')->pluck('username')->flip();
@@ -172,7 +217,7 @@ class VoucherController extends Controller
         $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // skip I,O,0,1 (mudah salah baca)
 
         while (count($codes) < $count) {
-            $code = $prefix . $this->randomCode($len, $alphabet);
+            $code = $fullPrefix . $this->randomCode($len, $alphabet);
             if (isset($existing[$code]) || in_array($code, $codes, true)) continue;
             $codes[] = $code;
         }
@@ -205,7 +250,7 @@ class VoucherController extends Controller
             'label'       => $data['label'] ?? null,
             'profile'     => $profile,
             'count'       => $count,
-            'prefix'      => $prefix ?: null,
+            'prefix'      => $fullPrefix ?: null,
             'code_length' => $len,
             'expires_at'  => $expires?->toDateString(),
             'codes'       => $codes,
@@ -228,6 +273,14 @@ class VoucherController extends Controller
 
     public function batchDestroy(VoucherBatch $batch): RedirectResponse
     {
+        // Multi-tenant: tolak hapus batch tenant lain. (VoucherBatch udah
+        // di-scope by global scope BelongsToTenant, jadi findOrFail udah
+        // ke-protect, tapi guard ulang via prefix juga aman.)
+        $tenantPrefix = $this->tenantVoucherPrefix();
+        if ($tenantPrefix && $batch->prefix && !Str::startsWith(strtoupper($batch->prefix), $tenantPrefix)) {
+            abort(403, 'Batch voucher ini bukan milik tenant lo.');
+        }
+
         // Hapus voucher dari RADIUS juga
         $codes = (array) $batch->codes;
         DB::connection('radius')->transaction(function () use ($codes) {
