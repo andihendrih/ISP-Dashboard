@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CustomerProfile;
 use App\Models\DeviceMikrotik;
 use App\Models\ServicePlan;
+use App\Services\CustomerAccountService;
 use App\Services\RadiusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,10 @@ use Illuminate\View\View;
 
 class CustomerController extends Controller
 {
-    public function __construct(private RadiusService $radius) {}
+    public function __construct(
+        private RadiusService $radius,
+        private CustomerAccountService $accounts,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -113,9 +117,24 @@ class CustomerController extends Controller
 
         $row = CustomerProfile::create($data);
 
+        // Auto-create portal user account (role=customer) untuk client portal nanti.
+        $accountFlash = null;
+        try {
+            $acct = $this->accounts->ensureForCustomer($row);
+            if ($acct['plain_password']) {
+                $accountFlash = "Akun portal — Email: {$acct['user']->email} | Password: {$acct['plain_password']}";
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Auto-create customer account failed: '.$e->getMessage());
+            $accountFlash = "Akun portal gagal dibuat: {$e->getMessage()} (data pelanggan tetap tersimpan).";
+        }
+
         $msg = "Pelanggan {$row->customer_code} — {$row->full_name} berhasil ditambahkan.";
         if ($radiusFlash) {
             $msg .= " {$radiusFlash}";
+        }
+        if ($accountFlash) {
+            $msg .= " {$accountFlash}";
         }
 
         return redirect()
@@ -246,5 +265,32 @@ class CustomerController extends Controller
         }
 
         return redirect()->route('customers.index')->with('success', 'Pelanggan diperbarui.');
+    }
+
+    /**
+     * Regenerate RADIUS password for a customer (one-click reset).
+     * Pakai generator alphanumeric-only supaya aman lewat semua jalur auth.
+     */
+    public function regenerateRadiusPassword(int $id): RedirectResponse
+    {
+        $row = CustomerProfile::findOrFail($id);
+
+        if (!$row->radius_username) {
+            return back()->with('error', "Pelanggan {$row->customer_code} belum punya RADIUS username — tidak bisa regenerate password.");
+        }
+
+        $newPassword = $this->radius->generatePppoePassword();
+
+        try {
+            $this->radius->setPassword($row->radius_username, $newPassword);
+            $row->update(['radius_password' => $newPassword]);
+            return back()->with('success',
+                "Password RADIUS {$row->radius_username} berhasil di-regenerate. " .
+                "Username: {$row->radius_username} | Password baru: {$newPassword}"
+            );
+        } catch (\Throwable $e) {
+            Log::warning("RADIUS regenerate password failed for {$row->radius_username}: ".$e->getMessage());
+            return back()->with('error', "Regenerate password gagal: {$e->getMessage()}");
+        }
     }
 }

@@ -17,6 +17,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
+        'customer_profile_id',
         'is_active',
     ];
 
@@ -36,6 +37,11 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    public function customerProfile(): BelongsTo
+    {
+        return $this->belongsTo(CustomerProfile::class, 'customer_profile_id');
+    }
+
     public function hasRole(string ...$names): bool
     {
         return $this->role && in_array($this->role->name, $names, true);
@@ -43,6 +49,11 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->hasRole('admin');
+        return $this->hasRole(Role::ADMIN, Role::SUPERADMIN);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(Role::SUPERADMIN);
     }
 }

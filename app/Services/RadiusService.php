@@ -286,29 +286,42 @@ class RadiusService
     /* Generators                                                        */
     /* ----------------------------------------------------------------- */
 
+    /**
+     * Alphanumeric-only PPPoE username. Special chars dihindari karena
+     * banyak Mikrotik/ONU GUI/CLI gagal resolve PPPoE auth kalau username
+     * mengandung `$`, `#`, `&`, `*`, dll (shell quoting + chr restriction).
+     */
     public function generatePppoeUsername(string $name, ?string $prefix = null): string
     {
         $prefix ??= config('ahnet.radius.pppoe_username_prefix');
         $slug = Str::slug(Str::lower($name), '');
         $slug = $slug !== '' ? Str::limit($slug, 16, '') : 'user';
-        $symbols = ['#', '!', '$', '%', '&', '*', '+', '-'];
-        $suffix = $symbols[array_rand($symbols)] . random_int(10, 99);
+        // suffix angka 3 digit (cukup untuk uniqueness saat slug duplikat)
+        $suffix = (string) random_int(100, 999);
         return $prefix . $slug . $suffix;
     }
 
+    /**
+     * Alphanumeric-only PPPoE password. Exclude ambiguous chars (0/O/1/l/I)
+     * supaya pelanggan gampang baca + ketik. Min 1 huruf besar, 1 huruf
+     * kecil, 1 angka. Aman lewat PAP/CHAP/MS-CHAP & semua GUI/CLI vendor.
+     */
     public function generatePppoePassword(int $length = 10): string
     {
-        $alpha = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
-        $sym   = '!@#$%&*+-?';
-        $digits = '23456789';
-        $pool  = $alpha . $digits;
+        $lower  = 'abcdefghjkmnpqrstuvwxyz';   // exclude i,l,o
+        $upper  = 'ABCDEFGHJKLMNPQRSTUVWXYZ';  // exclude I,O
+        $digits = '23456789';                   // exclude 0,1
+        $pool   = $lower . $upper . $digits;
+
+        $length = max($length, 6);
         $out = '';
-        for ($i = 0; $i < $length - 2; $i++) {
+        for ($i = 0; $i < $length - 3; $i++) {
             $out .= $pool[random_int(0, strlen($pool) - 1)];
         }
-        // ensure at least one digit + one symbol
+        // ensure at least 1 lowercase + 1 uppercase + 1 digit
+        $out .= $lower[random_int(0, strlen($lower) - 1)];
+        $out .= $upper[random_int(0, strlen($upper) - 1)];
         $out .= $digits[random_int(0, strlen($digits) - 1)];
-        $out .= $sym[random_int(0, strlen($sym) - 1)];
         return str_shuffle($out);
     }
 
