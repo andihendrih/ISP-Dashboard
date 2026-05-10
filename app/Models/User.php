@@ -17,6 +17,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
+        'tenant_id',
         'customer_profile_id',
         'is_active',
     ];
@@ -40,6 +41,11 @@ class User extends Authenticatable
     public function customerProfile(): BelongsTo
     {
         return $this->belongsTo(CustomerProfile::class, 'customer_profile_id');
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
     }
 
     public function hasRole(string ...$names): bool
