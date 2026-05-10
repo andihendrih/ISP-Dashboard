@@ -19,6 +19,7 @@ use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\Settings\UserController as SettingsUserController;
+use App\Http\Controllers\Settings\TenantController as SettingsTenantController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -186,5 +187,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/users/{user}/reset',    [SettingsUserController::class, 'resetPassword'])->name('users.reset');
         Route::post('/users/{user}/toggle',   [SettingsUserController::class, 'toggleActive'])->name('users.toggle');
         Route::delete('/users/{user}',        [SettingsUserController::class, 'destroy'])->name('users.destroy');
+    });
+
+    /* Pengaturan — Tenants (superadmin only — SaaS multi-tenant management) */
+    Route::middleware('role:superadmin')->prefix('settings')->name('settings.')->group(function () {
+        Route::get('/tenants',                  [SettingsTenantController::class, 'index'])->name('tenants.index');
+        Route::get('/tenants/create',           [SettingsTenantController::class, 'create'])->name('tenants.create');
+        Route::post('/tenants',                 [SettingsTenantController::class, 'store'])->name('tenants.store');
+        Route::get('/tenants/{tenant}/edit',    [SettingsTenantController::class, 'edit'])->name('tenants.edit');
+        Route::put('/tenants/{tenant}',         [SettingsTenantController::class, 'update'])->name('tenants.update');
+        Route::delete('/tenants/{tenant}',      [SettingsTenantController::class, 'destroy'])->name('tenants.destroy');
+        Route::post('/tenants/{tenant}/switch', [SettingsTenantController::class, 'switch'])->name('tenants.switch');
+        Route::post('/tenants/clear-switch',    [SettingsTenantController::class, 'clearSwitch'])->name('tenants.clear-switch');
     });
 });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,7 +24,13 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
-        $q = User::query()->with(['role', 'customerProfile'])->orderBy('name');
+        $tenantId = $this->scopedTenantId();
+
+        $base = fn () => $tenantId
+            ? User::query()->where('tenant_id', $tenantId)
+            : User::query();
+
+        $q = $base()->with(['role', 'customerProfile', 'tenant'])->orderBy('name');
 
         if ($s = trim((string) $request->query('q'))) {
             $q->where(function ($w) use ($s) {
@@ -51,12 +58,33 @@ class UserController extends Controller
             'roleFilter' => $roleFilter,
             'qs'         => $s,
             'stats'      => [
-                'total'    => User::count(),
-                'staff'    => User::whereHas('role', fn($w) => $w->whereIn('name', Role::STAFF_ROLES))->count(),
-                'customer' => User::whereHas('role', fn($w) => $w->where('name', Role::CUSTOMER))->count(),
-                'inactive' => User::where('is_active', false)->count(),
+                'total'    => $base()->count(),
+                'staff'    => $base()->whereHas('role', fn($w) => $w->whereIn('name', Role::STAFF_ROLES))->count(),
+                'customer' => $base()->whereHas('role', fn($w) => $w->where('name', Role::CUSTOMER))->count(),
+                'inactive' => $base()->where('is_active', false)->count(),
             ],
         ]);
+    }
+
+    /**
+     * Tenant ID yang aktif buat scoping. Null kalau superadmin global
+     * (lihat semua tenant).
+     */
+    protected function scopedTenantId(): ?int
+    {
+        return app(TenantContext::class)->tenantId();
+    }
+
+    /**
+     * Pastikan target user berada di tenant yang sama dengan operator
+     * yang lagi login. Superadmin global di-bypass.
+     */
+    protected function ensureSameTenant(User $user): void
+    {
+        $tenantId = $this->scopedTenantId();
+        if ($tenantId !== null && (int) $user->tenant_id !== $tenantId) {
+            abort(404);
+        }
     }
 
     public function create(): View
@@ -88,6 +116,7 @@ class UserController extends Controller
             'email'     => $data['email'],
             'password'  => Hash::make($plain),
             'role_id'   => $role->id,
+            'tenant_id' => $this->scopedTenantId(), // ikut tenant operator (null = superadmin global)
             'is_active' => (bool) ($data['is_active'] ?? true),
         ]);
 
@@ -99,6 +128,7 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
+        $this->ensureSameTenant($user);
         $isCustomer = $user->role && $user->role->name === Role::CUSTOMER;
         return view('settings.users.edit', [
             'user'       => $user->load(['role', 'customerProfile']),
@@ -109,6 +139,7 @@ class UserController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
+        $this->ensureSameTenant($user);
         $data = $request->validate([
             'name'    => ['required', 'string', 'max:120'],
             'email'   => ['required', 'email', 'max:120', Rule::unique('users', 'email')->ignore($user->id)],
@@ -147,6 +178,7 @@ class UserController extends Controller
 
     public function resetPassword(User $user): RedirectResponse
     {
+        $this->ensureSameTenant($user);
         $plain = Str::password(10, true, true, false, false);
         $user->update(['password' => Hash::make($plain)]);
         return back()->with('success', "Password {$user->name} di-reset. Password baru: {$plain}");
@@ -154,6 +186,7 @@ class UserController extends Controller
 
     public function toggleActive(User $user): RedirectResponse
     {
+        $this->ensureSameTenant($user);
         if ($user->isSuperAdmin() && $user->is_active) {
             $stillSuper = User::whereHas('role', fn($w) => $w->where('name', Role::SUPERADMIN))
                 ->where('id', '!=', $user->id)
@@ -170,6 +203,7 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
+        $this->ensureSameTenant($user);
         if ($user->id === $request->user()->id) {
             return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
         }
