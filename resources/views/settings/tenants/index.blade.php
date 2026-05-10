@@ -87,6 +87,21 @@
                             </form>
                             <a href="{{ route('settings.tenants.edit', $t) }}" class="px-2.5 py-1 rounded-lg text-xs bg-ink/5 hover:bg-ink/10 text-ink/80">Edit</a>
                             @if($t->code !== \App\Models\Tenant::DEFAULT_CODE)
+                                <form method="POST" action="{{ route('settings.tenants.regenerate-admin-password', $t) }}" class="inline" onsubmit="return confirm('Regenerate password admin untuk tenant {{ $t->name }}? Password lama akan diganti.')">
+                                    @csrf
+                                    <input type="hidden" name="send_wa" value="1">
+                                    <button type="submit" class="px-2.5 py-1 rounded-lg text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-medium" title="Generate password baru + kirim via WA ke PIC (kalau contact_phone diisi)">
+                                        Regen Pass + WA
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('settings.tenants.regenerate-admin-password', $t) }}" class="inline" onsubmit="return confirm('Regenerate password admin untuk tenant {{ $t->name }}? Password lama akan diganti. Lo akan copy paste manual ke pelanggan.')">
+                                    @csrf
+                                    <button type="submit" class="px-2.5 py-1 rounded-lg text-xs bg-amber-50 hover:bg-amber-100 text-amber-800" title="Generate password baru, tampil sekali di success message (gak kirim WA)">
+                                        Regen Manual
+                                    </button>
+                                </form>
+                            @endif
+                            @if($t->code !== \App\Models\Tenant::DEFAULT_CODE)
                                 <form method="POST" action="{{ route('settings.tenants.destroy', $t) }}" class="inline" onsubmit="return confirm('Hapus tenant {{ $t->name }}? Hanya bisa kalau gak ada data pelanggan/invoice/user.')">
                                     @csrf @method('DELETE')
                                     <button class="px-2.5 py-1 rounded-lg text-xs bg-rose-100 hover:bg-rose-200 text-rose-900">Hapus</button>

@@ -120,6 +120,13 @@
                 <label class="text-xs text-ink/55 font-medium">Password <span class="text-ink/40 font-normal">(opsional — kosongin untuk auto-generate)</span></label>
                 <input name="admin_password" type="text" placeholder="auto-generate kalau kosong" value="{{ old('admin_password') }}" class="w-full mt-1 border border-ink/10 rounded-lg px-3 py-2 text-sm font-mono">
             </div>
+            <div class="sm:col-span-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="send_wa" value="1" {{ old('send_wa') ? 'checked' : '' }} class="rounded border-ink/20">
+                    <span class="text-sm text-ink/80">Kirim credential via WhatsApp ke <strong>nomor PIC Tenant</strong> (contact_phone) setelah dibuat</span>
+                </label>
+                <p class="text-xs text-ink/50 ml-6 mt-1">Pastikan PIC Tenant → Nomor PIC sudah diisi (format: 08xxx atau 628xxx). Kalau gak dicentang, lo copy paste manual dari success message.</p>
+            </div>
         </div>
     </div>
 

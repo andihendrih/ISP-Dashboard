@@ -199,5 +199,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/tenants/{tenant}',      [SettingsTenantController::class, 'destroy'])->name('tenants.destroy');
         Route::post('/tenants/{tenant}/switch', [SettingsTenantController::class, 'switch'])->name('tenants.switch');
         Route::post('/tenants/clear-switch',    [SettingsTenantController::class, 'clearSwitch'])->name('tenants.clear-switch');
+        Route::post('/tenants/{tenant}/regenerate-admin-password', [SettingsTenantController::class, 'regenerateAdminPassword'])->name('tenants.regenerate-admin-password');
     });
 });

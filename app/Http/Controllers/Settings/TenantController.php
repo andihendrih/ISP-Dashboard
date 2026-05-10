@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Notifications\NotificationService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -131,11 +133,75 @@ class TenantController extends Controller
             return [$tenant, $admin, $plain];
         });
 
+        // Optional: kirim credential via WhatsApp ke PIC tenant.
+        $waInfo = '';
+        if ($request->boolean('send_wa') && !empty($tenant->contact_phone)) {
+            $waInfo = $this->dispatchAdminCredentialWa($tenant, $admin, $plain);
+        }
+
         return redirect()->route('settings.tenants.index')->with(
             'success',
             "Tenant {$tenant->name} ({$tenant->code}) dibuat. " .
-            "Admin awal — Email: {$admin->email} | Password: {$plain}"
+            "Admin awal — Email: {$admin->email} | Password: {$plain}" . $waInfo
         );
+    }
+
+    /**
+     * Regenerate password admin tenant. Cuma superadmin yang boleh.
+     * Target = user admin pertama di tenant ini (ordered by id).
+     * Optional kirim password baru via WhatsApp ke PIC.
+     */
+    public function regenerateAdminPassword(Request $request, Tenant $tenant): RedirectResponse
+    {
+        $admin = User::withoutGlobalScopes()
+            ->where('tenant_id', $tenant->id)
+            ->whereHas('role', fn ($w) => $w->where('name', Role::ADMIN))
+            ->orderBy('id')
+            ->first();
+
+        if (!$admin) {
+            return back()->with('error',
+                "Tenant {$tenant->name} belum punya user admin. Tambah admin manual lewat menu Pengguna."
+            );
+        }
+
+        $plain = Str::password(10, true, true, false, false);
+        $admin->update(['password' => Hash::make($plain), 'is_active' => true]);
+
+        $waInfo = '';
+        if ($request->boolean('send_wa') && !empty($tenant->contact_phone)) {
+            $waInfo = $this->dispatchAdminCredentialWa($tenant, $admin, $plain);
+        }
+
+        return back()->with('success',
+            "Password admin tenant {$tenant->name} di-regenerate. " .
+            "Email: {$admin->email} | Password baru: {$plain}" . $waInfo
+        );
+    }
+
+    /**
+     * Kirim credential admin tenant via WhatsApp ke PIC contact_phone.
+     * Returns suffix string buat di-append ke flash success.
+     */
+    protected function dispatchAdminCredentialWa(Tenant $tenant, User $admin, string $plain): string
+    {
+        $loginUrl = url('/login');
+        $body = "Halo {$tenant->contact_name},\n\n"
+              . "Akun admin portal {$tenant->name} sudah siap:\n\n"
+              . "• URL: {$loginUrl}\n"
+              . "• Email: {$admin->email}\n"
+              . "• Password: {$plain}\n\n"
+              . "Silakan login lalu ganti password Anda di menu Pengaturan. "
+              . "Pesan ini berisi credential — jangan diteruskan.";
+        try {
+            app(NotificationService::class)->sendTestWa($tenant->contact_phone, $body);
+            return " — dikirim via WA ke {$tenant->contact_phone}.";
+        } catch (\Throwable $e) {
+            Log::warning('Tenant credential WA failed: ' . $e->getMessage(), [
+                'tenant_id' => $tenant->id, 'phone' => $tenant->contact_phone,
+            ]);
+            return " (Gagal kirim WA: " . $e->getMessage() . ")";
+        }
     }
 
     public function edit(Tenant $tenant): View
