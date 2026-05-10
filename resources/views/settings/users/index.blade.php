@@ -106,24 +106,35 @@
                         @endif
                     </td>
                     <td class="px-5 py-3 text-right">
-                        <div class="inline-flex gap-1">
-                            <a href="{{ route('settings.users.edit', $u) }}" class="px-3 py-1.5 rounded-lg text-xs bg-ink/10 hover:bg-ink/20">Edit</a>
-                            <form method="POST" action="{{ route('settings.users.reset', $u) }}" onsubmit="return confirm('Reset password user ini?')">
-                                @csrf
-                                <button class="px-3 py-1.5 rounded-lg text-xs bg-amber-100 text-amber-900 hover:bg-amber-200">Reset Pwd</button>
-                            </form>
-                            <form method="POST" action="{{ route('settings.users.toggle', $u) }}">
-                                @csrf
-                                <button class="px-3 py-1.5 rounded-lg text-xs {{ $u->is_active ? 'bg-rose-100 text-rose-900 hover:bg-rose-200' : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200' }}">
-                                    {{ $u->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('settings.users.destroy', $u) }}" onsubmit="return confirm('Hapus user {{ $u->name }}?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="px-3 py-1.5 rounded-lg text-xs bg-rose-600 text-white hover:bg-rose-700">Hapus</button>
-                            </form>
-                        </div>
+                        @php
+                            // Hide aksi edit/reset/toggle/hapus kalau target adalah superadmin
+                            // dan operator bukan superadmin (tenant admin gak boleh modify
+                            // superadmin sama sekali — lebih bersih dari pada show button trus 403).
+                            $isProtected = $u->role && $u->role->name === \App\Models\Role::SUPERADMIN
+                                && (!auth()->user()->role || auth()->user()->role->name !== \App\Models\Role::SUPERADMIN);
+                        @endphp
+                        @if($isProtected)
+                            <span class="text-xs text-ink/40 italic">— protected —</span>
+                        @else
+                            <div class="inline-flex gap-1">
+                                <a href="{{ route('settings.users.edit', $u) }}" class="px-3 py-1.5 rounded-lg text-xs bg-ink/10 hover:bg-ink/20">Edit</a>
+                                <form method="POST" action="{{ route('settings.users.reset', $u) }}" onsubmit="return confirm('Reset password user ini?')">
+                                    @csrf
+                                    <button class="px-3 py-1.5 rounded-lg text-xs bg-amber-100 text-amber-900 hover:bg-amber-200">Reset Pwd</button>
+                                </form>
+                                <form method="POST" action="{{ route('settings.users.toggle', $u) }}">
+                                    @csrf
+                                    <button class="px-3 py-1.5 rounded-lg text-xs {{ $u->is_active ? 'bg-rose-100 text-rose-900 hover:bg-rose-200' : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200' }}">
+                                        {{ $u->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('settings.users.destroy', $u) }}" onsubmit="return confirm('Hapus user {{ $u->name }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="px-3 py-1.5 rounded-lg text-xs bg-rose-600 text-white hover:bg-rose-700">Hapus</button>
+                                </form>
+                            </div>
+                        @endif
                     </td>
                 </tr>
             @empty
