@@ -72,7 +72,10 @@
         </div>
     </div>
 
-    <div>
+    <div class="space-y-4">
+        <div class="bg-white rounded-3xl shadow-card p-5">
+            <a href="{{ route('my_subscription.invoices.pdf', $invoice) }}" target="_blank" class="block text-center w-full px-4 py-2 bg-ink text-white rounded-xl text-sm hover:bg-black">📄 Cetak / Download PDF</a>
+        </div>
         @if(!in_array($invoice->status, ['paid','cancelled']))
         <div class="bg-white rounded-3xl shadow-card p-5">
             <h2 class="font-bold text-sm mb-3">Kirim Bukti Bayar</h2>

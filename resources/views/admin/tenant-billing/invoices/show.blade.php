@@ -95,19 +95,20 @@
     </div>
 
     <div class="space-y-4">
-        @if(!in_array($invoice->status, ['paid','cancelled']))
         <div class="bg-white rounded-3xl shadow-card p-5">
             <h2 class="font-bold text-sm mb-3">Aksi Cepat</h2>
-            <form method="POST" action="{{ route('tenant_billing.invoices.mark-paid', $invoice) }}" onsubmit="return confirm('Tandai invoice lunas?')" class="mb-2">
-                @csrf
-                <button class="w-full px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">Tandai Lunas (Manual)</button>
-            </form>
-            <form method="POST" action="{{ route('tenant_billing.invoices.cancel', $invoice) }}" onsubmit="return confirm('Batalkan invoice?')">
-                @csrf
-                <button class="w-full px-4 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-sm hover:bg-rose-100">Batalkan Invoice</button>
-            </form>
+            <a href="{{ route('tenant_billing.invoices.pdf', $invoice) }}" target="_blank" class="block text-center w-full px-4 py-2 bg-ink text-white rounded-xl text-sm hover:bg-black mb-2">📄 Cetak PDF</a>
+            @if(!in_array($invoice->status, ['paid','cancelled']))
+                <form method="POST" action="{{ route('tenant_billing.invoices.mark-paid', $invoice) }}" onsubmit="return confirm('Tandai invoice lunas?')" class="mb-2">
+                    @csrf
+                    <button class="w-full px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">Tandai Lunas (Manual)</button>
+                </form>
+                <form method="POST" action="{{ route('tenant_billing.invoices.cancel', $invoice) }}" onsubmit="return confirm('Batalkan invoice?')">
+                    @csrf
+                    <button class="w-full px-4 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-sm hover:bg-rose-100">Batalkan Invoice</button>
+                </form>
+            @endif
         </div>
-        @endif
 
         @if(!in_array($invoice->status, ['paid','cancelled']))
         <div class="bg-white rounded-3xl shadow-card p-5">

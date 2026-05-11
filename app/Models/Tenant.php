@@ -93,6 +93,11 @@ class Tenant extends Model
         return $this->hasMany(TenantPayment::class);
     }
 
+    public function setting(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(TenantSetting::class);
+    }
+
     /**
      * Resolve default tenant (platform owner). Idempotent — return existing
      * jika ada, atau bikin baru.

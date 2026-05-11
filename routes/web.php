@@ -224,6 +224,7 @@ Route::middleware('auth')->group(function () {
         // Invoices
         Route::get('/invoices',                      [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoicesIndex'])->name('invoices.index');
         Route::get('/invoices/{invoice}',            [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoiceShow'])->name('invoices.show');
+        Route::get('/invoices/{invoice}/pdf',        [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoicePdf'])->name('invoices.pdf');
         Route::post('/invoices/{invoice}/cancel',    [\App\Http\Controllers\Admin\TenantBillingController::class, 'cancelInvoice'])->name('invoices.cancel');
         Route::post('/invoices/{invoice}/mark-paid', [\App\Http\Controllers\Admin\TenantBillingController::class, 'markPaid'])->name('invoices.mark-paid');
 
@@ -237,6 +238,20 @@ Route::middleware('auth')->group(function () {
     Route::prefix('billing/my-subscription')->name('my_subscription.')->group(function () {
         Route::get('/',                       [\App\Http\Controllers\MySubscriptionController::class, 'index'])->name('index');
         Route::get('/invoices/{invoice}',     [\App\Http\Controllers\MySubscriptionController::class, 'invoiceShow'])->name('invoices.show');
+        Route::get('/invoices/{invoice}/pdf', [\App\Http\Controllers\MySubscriptionController::class, 'invoicePdf'])->name('invoices.pdf');
         Route::post('/invoices/{invoice}/pay', [\App\Http\Controllers\MySubscriptionController::class, 'submitPayment'])->name('invoices.pay');
+    });
+
+    /* Settings tenant — brand, WA, email, gateway (admin & finance tenant) */
+    Route::middleware('role:superadmin,admin,finance')->prefix('settings/tenant')->name('settings.tenant_settings.')->group(function () {
+        Route::get('/',          [\App\Http\Controllers\Settings\TenantSettingsController::class, 'index'])->name('index');
+        Route::get('/brand',     [\App\Http\Controllers\Settings\TenantSettingsController::class, 'brand'])->name('brand');
+        Route::post('/brand',    [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateBrand'])->name('brand.update');
+        Route::get('/whatsapp',  [\App\Http\Controllers\Settings\TenantSettingsController::class, 'whatsapp'])->name('whatsapp');
+        Route::post('/whatsapp', [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateWhatsapp'])->name('whatsapp.update');
+        Route::get('/email',     [\App\Http\Controllers\Settings\TenantSettingsController::class, 'email'])->name('email');
+        Route::post('/email',    [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateEmail'])->name('email.update');
+        Route::get('/gateway',   [\App\Http\Controllers\Settings\TenantSettingsController::class, 'gateway'])->name('gateway');
+        Route::post('/gateway',  [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateGateway'])->name('gateway.update');
     });
 });

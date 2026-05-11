@@ -109,6 +109,20 @@ class TenantBillingController extends Controller
         return view('admin.tenant-billing.invoices.show', compact('invoice'));
     }
 
+    public function invoicePdf(TenantInvoice $invoice)
+    {
+        $invoice->load(['tenant', 'plan', 'subscription', 'payments']);
+        $platform = [
+            'name'         => config('app.name', 'ISP Dashboard'),
+            'address'      => config('ahnet.platform.address', '—'),
+            'phone'        => config('ahnet.platform.phone', null),
+            'email'        => config('ahnet.platform.email', null),
+            'payment_info' => config('ahnet.platform.payment_info', null),
+        ];
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.tenant-billing.invoices.pdf', compact('invoice', 'platform'))->setPaper('a4');
+        return $pdf->stream("{$invoice->invoice_number}.pdf");
+    }
+
     public function cancelInvoice(TenantInvoice $invoice): RedirectResponse
     {
         if ($invoice->status === TenantInvoice::STATUS_PAID) {
