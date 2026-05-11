@@ -100,7 +100,45 @@ class TenantBillingController extends Controller
         if ($tenant) $q->where('tenant_id', $tenant);
         $invoices = $q->paginate(30)->withQueryString();
         $tenants  = Tenant::orderBy('name')->get();
-        return view('admin.tenant-billing.invoices.index', compact('invoices', 'tenants', 'status', 'tenant'));
+        $activeSubs = TenantSubscription::with(['tenant', 'plan'])
+            ->whereIn('status', [TenantSubscription::STATUS_ACTIVE, TenantSubscription::STATUS_PAST_DUE, TenantSubscription::STATUS_SUSPENDED])
+            ->get();
+        return view('admin.tenant-billing.invoices.index', compact('invoices', 'tenants', 'status', 'tenant', 'activeSubs'));
+    }
+
+    /**
+     * Generate invoice manual untuk subscription yang udah ada.
+     * Form: pilih subscription + period_start + period_end + (opsional) amount override + (opsional) due_date.
+     */
+    public function generateManualInvoice(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'subscription_id' => ['required', 'integer', 'exists:tenant_subscriptions,id'],
+            'period_start'    => ['required', 'date'],
+            'period_end'      => ['required', 'date', 'after_or_equal:period_start'],
+            'amount'          => ['nullable', 'integer', 'min:0'],
+            'due_date'        => ['nullable', 'date'],
+            'note'            => ['nullable', 'string', 'max:500'],
+        ]);
+        $sub = TenantSubscription::with(['tenant', 'plan'])->findOrFail($data['subscription_id']);
+        $inv = $this->svc->generateInvoiceForSubscription($sub, $data['period_start'], $data['period_end'], false);
+        // Override kalau user kasih amount / due_date custom
+        $dirty = [];
+        if (!empty($data['amount'])) {
+            $inv->amount = (int) $data['amount'];
+            $inv->prorate_factor = 1.0;
+            $dirty['amount'] = $data['amount'];
+        }
+        if (!empty($data['due_date'])) {
+            $inv->due_date = $data['due_date'];
+            $dirty['due_date'] = $data['due_date'];
+        }
+        if (!empty($data['note'])) {
+            $inv->notes = $data['note'];
+        }
+        if ($dirty || !empty($data['note'])) $inv->save();
+        return redirect()->route('tenant_billing.invoices.show', $inv)
+            ->with('success', "Invoice {$inv->invoice_number} dibikin untuk {$sub->tenant?->name} (Rp " . number_format($inv->amount, 0, ',', '.') . ").");
     }
 
     public function invoiceShow(TenantInvoice $invoice): View

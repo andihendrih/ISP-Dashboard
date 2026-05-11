@@ -223,6 +223,7 @@ Route::middleware('auth')->group(function () {
 
         // Invoices
         Route::get('/invoices',                      [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoicesIndex'])->name('invoices.index');
+        Route::post('/invoices/generate-manual',     [\App\Http\Controllers\Admin\TenantBillingController::class, 'generateManualInvoice'])->name('invoices.generate-manual');
         Route::get('/invoices/{invoice}',            [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoiceShow'])->name('invoices.show');
         Route::get('/invoices/{invoice}/pdf',        [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoicePdf'])->name('invoices.pdf');
         Route::post('/invoices/{invoice}/cancel',    [\App\Http\Controllers\Admin\TenantBillingController::class, 'cancelInvoice'])->name('invoices.cancel');
