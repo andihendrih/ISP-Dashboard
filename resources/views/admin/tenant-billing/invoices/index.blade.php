@@ -8,6 +8,53 @@
         <h1 class="text-xl sm:text-2xl font-bold">Invoices</h1>
         <p class="text-sm text-ink/55">Tagihan subscription tenant.</p>
     </div>
+    <button type="button" onclick="document.getElementById('gen-manual').classList.toggle('hidden')" class="px-4 py-2 bg-ink text-white rounded-xl text-sm hover:bg-black self-start sm:self-auto">+ Generate Invoice Manual</button>
+</div>
+
+<div id="gen-manual" class="hidden bg-white rounded-3xl shadow-card p-4 sm:p-6 mb-4 border border-amber-200">
+    <h2 class="font-bold text-sm mb-1">Generate Invoice Manual</h2>
+    <p class="text-xs text-ink/55 mb-3">Bikin invoice baru di luar cron bulanan — misal untuk test, late charge, atau tagihan one-off. Pilih subscription, period, dan opsional override amount/due.</p>
+    <form method="POST" action="{{ route('tenant_billing.invoices.generate-manual') }}" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        @csrf
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-ink/65 mb-1">Subscription Tenant</label>
+            <select name="subscription_id" required class="w-full border border-ink/10 rounded-lg px-3 py-2 text-sm">
+                <option value="">— Pilih subscription —</option>
+                @foreach($activeSubs as $s)
+                    <option value="{{ $s->id }}">
+                        {{ $s->tenant?->name ?? '—' }} ({{ $s->tenant?->code }}) — Plan: {{ $s->plan?->name ?? '—' }} — Rp {{ number_format($s->effectivePrice(), 0, ',', '.') }}/bln — Status: {{ $s->status }}
+                    </option>
+                @endforeach
+            </select>
+            @if($activeSubs->isEmpty())
+                <p class="text-xs text-amber-700 mt-1">Belum ada subscription. Buat di <a href="{{ route('tenant_billing.subscriptions.index') }}" class="underline">menu Subscriptions</a> dulu.</p>
+            @endif
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-ink/65 mb-1">Period Start</label>
+            <input type="date" name="period_start" required value="{{ now()->startOfMonth()->toDateString() }}" class="w-full border border-ink/10 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-ink/65 mb-1">Period End</label>
+            <input type="date" name="period_end" required value="{{ now()->endOfMonth()->toDateString() }}" class="w-full border border-ink/10 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-ink/65 mb-1">Amount (Rp) <span class="text-ink/45 font-normal">— opsional, kosongkan = pake harga plan</span></label>
+            <input type="number" name="amount" min="0" placeholder="Auto dari plan" class="w-full border border-ink/10 rounded-lg px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-ink/65 mb-1">Due Date <span class="text-ink/45 font-normal">— opsional, default H+7</span></label>
+            <input type="date" name="due_date" class="w-full border border-ink/10 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-ink/65 mb-1">Note (opsional)</label>
+            <input name="note" maxlength="500" placeholder="e.g. Tagihan tambahan setup awal" class="w-full border border-ink/10 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="md:col-span-2 flex gap-2">
+            <button class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">Generate Invoice</button>
+            <button type="button" onclick="document.getElementById('gen-manual').classList.add('hidden')" class="px-4 py-2 rounded-xl text-sm text-ink/60 hover:bg-cream-deep/60">Batal</button>
+        </div>
+    </form>
 </div>
 
 @if(session('success'))<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-3 mb-4 text-sm">{{ session('success') }}</div>@endif

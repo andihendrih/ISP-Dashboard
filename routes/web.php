@@ -223,6 +223,7 @@ Route::middleware('auth')->group(function () {
 
         // Invoices
         Route::get('/invoices',                      [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoicesIndex'])->name('invoices.index');
+        Route::post('/invoices/generate-manual',     [\App\Http\Controllers\Admin\TenantBillingController::class, 'generateManualInvoice'])->name('invoices.generate-manual');
         Route::get('/invoices/{invoice}',            [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoiceShow'])->name('invoices.show');
         Route::get('/invoices/{invoice}/pdf',        [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoicePdf'])->name('invoices.pdf');
         Route::post('/invoices/{invoice}/cancel',    [\App\Http\Controllers\Admin\TenantBillingController::class, 'cancelInvoice'])->name('invoices.cancel');
@@ -255,5 +256,21 @@ Route::middleware('auth')->group(function () {
         Route::post('/email/test', [\App\Http\Controllers\Settings\TenantSettingsController::class, 'testEmail'])->name('email.test');
         Route::get('/gateway',   [\App\Http\Controllers\Settings\TenantSettingsController::class, 'gateway'])->name('gateway');
         Route::post('/gateway',  [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateGateway'])->name('gateway.update');
+    });
+
+    /* Platform settings (superadmin only) — branding, WA, email, bank info untuk lo nagih tenant */
+    Route::middleware('role:superadmin')->prefix('admin/platform-settings')->name('admin.platform_settings.')->group(function () {
+        $c = \App\Http\Controllers\Admin\PlatformSettingsController::class;
+        Route::get('/',          [$c, 'index'])->name('index');
+        Route::get('/brand',     [$c, 'brand'])->name('brand');
+        Route::post('/brand',    [$c, 'updateBrand'])->name('brand.update');
+        Route::get('/bank',      [$c, 'bank'])->name('bank');
+        Route::post('/bank',     [$c, 'updateBank'])->name('bank.update');
+        Route::get('/whatsapp',  [$c, 'whatsapp'])->name('whatsapp');
+        Route::post('/whatsapp', [$c, 'updateWhatsapp'])->name('whatsapp.update');
+        Route::post('/whatsapp/test', [$c, 'testWa'])->name('whatsapp.test');
+        Route::get('/email',     [$c, 'email'])->name('email');
+        Route::post('/email',    [$c, 'updateEmail'])->name('email.update');
+        Route::post('/email/test', [$c, 'testEmail'])->name('email.test');
     });
 });

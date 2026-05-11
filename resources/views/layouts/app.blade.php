@@ -223,6 +223,12 @@
                         Settings Tenant
                     </a>
                 @endif
+                @if($role === 'superadmin')
+                    <a href="{{ route('admin.platform_settings.index') }}" class="nav-item {{ request()->routeIs('admin.platform_settings.*') ? 'active' : '' }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
+                        Platform Settings
+                    </a>
+                @endif
             @endif
         </nav>
 

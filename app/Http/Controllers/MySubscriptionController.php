@@ -47,13 +47,7 @@ class MySubscriptionController extends Controller
         $u = Auth::user();
         abort_if(!$u || $invoice->tenant_id !== $u->tenant_id, 403);
         $invoice->load(['tenant', 'plan', 'subscription', 'payments']);
-        $platform = [
-            'name'         => config('app.name', 'ISP Dashboard'),
-            'address'      => config('ahnet.platform.address', '—'),
-            'phone'        => config('ahnet.platform.phone', null),
-            'email'        => config('ahnet.platform.email', null),
-            'payment_info' => config('ahnet.platform.payment_info', null),
-        ];
+        $platform = \App\Http\Controllers\Admin\TenantBillingController::platformDescriptor();
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.tenant-billing.invoices.pdf', compact('invoice', 'platform'))->setPaper('a4');
         return $pdf->stream("{$invoice->invoice_number}.pdf");
     }

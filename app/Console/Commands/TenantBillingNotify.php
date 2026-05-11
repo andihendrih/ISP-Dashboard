@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\Admin\PlatformSettingsController;
 use App\Models\TenantInvoice;
 use App\Services\Notifications\Contracts\WaProvider;
 use Carbon\CarbonImmutable;
@@ -24,6 +25,11 @@ class TenantBillingNotify extends Command
 
     public function handle(WaProvider $wa): int
     {
+        // Override: pakai provider PlatformSetting kalau di-config; fallback ke global $wa injected.
+        $platformWa = PlatformSettingsController::resolveWa();
+        if (!($platformWa instanceof \App\Services\Notifications\Providers\NullWaProvider)) {
+            $wa = $platformWa;
+        }
         $today   = CarbonImmutable::today();
         $days    = config('ahnet.tenant_billing.reminder_days', [-3, -1, 1, 7]);
         $sent    = 0;
