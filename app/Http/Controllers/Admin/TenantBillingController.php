@@ -112,15 +112,33 @@ class TenantBillingController extends Controller
     public function invoicePdf(TenantInvoice $invoice)
     {
         $invoice->load(['tenant', 'plan', 'subscription', 'payments']);
-        $platform = [
-            'name'         => config('app.name', 'ISP Dashboard'),
-            'address'      => config('ahnet.platform.address', '—'),
-            'phone'        => config('ahnet.platform.phone', null),
-            'email'        => config('ahnet.platform.email', null),
-            'payment_info' => config('ahnet.platform.payment_info', null),
-        ];
+        $platform = self::platformDescriptor();
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.tenant-billing.invoices.pdf', compact('invoice', 'platform'))->setPaper('a4');
         return $pdf->stream("{$invoice->invoice_number}.pdf");
+    }
+
+    /**
+     * Bikin descriptor platform untuk PDF / email. PlatformSetting jadi single source of truth;
+     * fallback ke config('ahnet.*') / config('app.name') kalau belum di-set.
+     */
+    public static function platformDescriptor(): array
+    {
+        $s = \App\Models\PlatformSetting::current();
+        $banks = $s->bankAccounts();
+        $bankLines = [];
+        foreach ($banks as $b) {
+            $bankLines[] = sprintf('%s %s a/n %s', $b['bank'], $b['account'], $b['name']);
+        }
+        $paymentInfo = $bankLines ? implode("\n", $bankLines) : config('ahnet.platform.payment_info');
+        return [
+            'name'         => $s->brand_name ?: config('app.name', 'ISP Dashboard'),
+            'address'      => $s->brand_address ?: config('ahnet.platform.address', '—'),
+            'phone'        => $s->brand_phone ?: config('ahnet.platform.phone'),
+            'email'        => $s->brand_email ?: config('ahnet.platform.email'),
+            'tagline'      => $s->brand_tagline,
+            'logo_path'    => $s->brand_logo_path,
+            'payment_info' => $paymentInfo,
+        ];
     }
 
     public function cancelInvoice(TenantInvoice $invoice): RedirectResponse

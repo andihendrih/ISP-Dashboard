@@ -26,28 +26,35 @@ class MailerFactory
         if (!$setting || $setting->email_provider === 'null') {
             return Mail::mailer();
         }
-
         $creds = $setting->emailCreds();
+        $fromName = $creds['from']['name'] ?? $setting->effectiveBrandName();
+        return self::buildMailer('tenant_'.$tenant->id, $setting->email_provider, $creds, $fromName)
+            ?? Mail::mailer();
+    }
+
+    /** Bikin Mailer dari PlatformSetting (untuk reminder superadmin ke tenant). */
+    public static function forPlatform(\App\Models\PlatformSetting $setting)
+    {
+        if ($setting->email_provider === 'null') return Mail::mailer();
+        $creds = $setting->emailCreds();
+        $fromName = $creds['from']['name'] ?? $setting->effectiveBrandName();
+        return self::buildMailer('platform', $setting->email_provider, $creds, $fromName)
+            ?? Mail::mailer();
+    }
+
+    private static function buildMailer(string $name, string $provider, array $creds, ?string $fromName)
+    {
         $fromEmail = $creds['from']['email'] ?? config('mail.from.address');
-        $fromName  = $creds['from']['name']  ?? $setting->effectiveBrandName();
-
-        $dsn = self::buildDsn($setting->email_provider, $creds);
-        if (!$dsn) return Mail::mailer();
-
+        $dsn = self::buildDsn($provider, $creds);
+        if (!$dsn) return null;
         try {
             $transport = Transport::fromDsn($dsn);
         } catch (\Throwable $e) {
-            return Mail::mailer();
+            return null;
         }
-
-        $mailer = new Mailer(
-            'tenant_'.$tenant->id,
-            app('view'),
-            $transport,
-            app('events'),
-        );
+        $mailer = new Mailer($name, app('view'), $transport, app('events'));
         if ($fromEmail) {
-            $mailer->alwaysFrom($fromEmail, $fromName);
+            $mailer->alwaysFrom($fromEmail, $fromName ?: $fromEmail);
         }
         return $mailer;
     }

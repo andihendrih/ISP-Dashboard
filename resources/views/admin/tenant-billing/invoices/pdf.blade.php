@@ -34,7 +34,11 @@
 <table class="row">
     <tr>
         <td>
+            @if(!empty($platform['logo_path']) && file_exists(public_path('storage/'.$platform['logo_path'])))
+                <img src="{{ public_path('storage/'.$platform['logo_path']) }}" style="max-height:46px; max-width:140px; margin-bottom:4px;">
+            @endif
             <h1>{{ $platform['name'] }}</h1>
+            @if(!empty($platform['tagline']))<div class="muted" style="font-style:italic">{{ $platform['tagline'] }}</div>@endif
             <div class="muted">{{ $platform['address'] }}</div>
             @if(!empty($platform['phone']))<div class="muted">Telp: {{ $platform['phone'] }}</div>@endif
             @if(!empty($platform['email']))<div class="muted">{{ $platform['email'] }}</div>@endif
