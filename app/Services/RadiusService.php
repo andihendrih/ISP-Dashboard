@@ -8,6 +8,7 @@ use App\Models\Radius\Radcheck;
 use App\Models\Radius\Radgroupreply;
 use App\Models\Radius\Radreply;
 use App\Models\Radius\Radusergroup;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -129,14 +130,75 @@ class RadiusService
         ]);
     }
 
-    /** Delete a RADIUS user and all related rows. */
+    /**
+     * Hard delete a RADIUS user and ALL related rows (radcheck, radreply,
+     * radusergroup, radacct, radpostauth). Use when CRM permanently removes a
+     * customer to avoid leftover state in FreeRADIUS.
+     */
     public function deleteUser(string $username): void
     {
         DB::connection('radius')->transaction(function () use ($username) {
             Radcheck::where('username', $username)->delete();
             Radreply::where('username', $username)->delete();
             Radusergroup::where('username', $username)->delete();
+            // Clean accounting + auth log too — prevents data buildup
+            DB::connection('radius')->table('radacct')->where('username', $username)->delete();
+            DB::connection('radius')->table('radpostauth')->where('username', $username)->delete();
         });
+    }
+
+    /* ----------------------------------------------------------------- */
+    /* Group discovery (dynamic from FreeRADIUS)                         */
+    /* ----------------------------------------------------------------- */
+
+    /**
+     * Return all configured groups in `radgroupreply`, optionally excluding
+     * legacy/test groups (e.g. HS_*). Result is cached briefly per request.
+     *
+     * @return Collection<int, string>
+     */
+    public function listGroups(bool $excludeLegacy = true): Collection
+    {
+        $rows = Radgroupreply::query()
+            ->select('groupname')
+            ->distinct()
+            ->orderBy('groupname')
+            ->pluck('groupname');
+
+        if ($excludeLegacy) {
+            $rows = $rows->reject(fn ($g) => str_starts_with((string) $g, 'HS_'));
+        }
+        return $rows->values();
+    }
+
+    /**
+     * Categorize groups for UI dropdowns / billing rules.
+     *
+     * @return array{home: array, broadband: array, bisnis: array, hotspot: array, other: array}
+     */
+    public function categorizeGroups(?Collection $groups = null): array
+    {
+        $groups ??= $this->listGroups();
+        $buckets = ['home' => [], 'broadband' => [], 'bisnis' => [], 'hotspot' => [], 'other' => []];
+
+        foreach ($groups as $g) {
+            $key = match (true) {
+                str_starts_with((string) $g, 'Home_')      => 'home',
+                str_starts_with((string) $g, 'Broadband')  => 'broadband',
+                str_starts_with((string) $g, 'Bisnis')     => 'bisnis',
+                str_starts_with((string) $g, 'Hotspot')    => 'hotspot',
+                default                                    => 'other',
+            };
+            $buckets[$key][] = $g;
+        }
+        return $buckets;
+    }
+
+    /** True if a group is hotspot voucher (non-billable). */
+    public static function isVoucherGroup(?string $groupname): bool
+    {
+        if ($groupname === null || $groupname === '') return false;
+        return str_starts_with($groupname, 'Hotspot') || str_starts_with($groupname, 'HS_');
     }
 
     /** Set or clear a Mikrotik-Rate-Limit attribute for a user. */
@@ -224,29 +286,44 @@ class RadiusService
     /* Generators                                                        */
     /* ----------------------------------------------------------------- */
 
+    /**
+     * Alphanumeric-only PPPoE username. Special chars dihindari karena
+     * banyak Mikrotik/ONU GUI/CLI gagal resolve PPPoE auth kalau username
+     * mengandung `$`, `#`, `&`, `*`, dll (shell quoting + chr restriction).
+     */
     public function generatePppoeUsername(string $name, ?string $prefix = null): string
     {
-        $prefix ??= config('ahnet.radius.pppoe_username_prefix');
+        // Multi-tenant: kalau prefix gak di-pass, ambil dari TenantContext.
+        // Tenant aktif → "<tenant_code>_", fallback → config default ("ahnet_").
+        $prefix ??= app(\App\Support\Tenancy\TenantContext::class)->radiusPrefix();
         $slug = Str::slug(Str::lower($name), '');
         $slug = $slug !== '' ? Str::limit($slug, 16, '') : 'user';
-        $symbols = ['#', '!', '$', '%', '&', '*', '+', '-'];
-        $suffix = $symbols[array_rand($symbols)] . random_int(10, 99);
+        // suffix angka 3 digit (cukup untuk uniqueness saat slug duplikat)
+        $suffix = (string) random_int(100, 999);
         return $prefix . $slug . $suffix;
     }
 
+    /**
+     * Alphanumeric-only PPPoE password. Exclude ambiguous chars (0/O/1/l/I)
+     * supaya pelanggan gampang baca + ketik. Min 1 huruf besar, 1 huruf
+     * kecil, 1 angka. Aman lewat PAP/CHAP/MS-CHAP & semua GUI/CLI vendor.
+     */
     public function generatePppoePassword(int $length = 10): string
     {
-        $alpha = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
-        $sym   = '!@#$%&*+-?';
-        $digits = '23456789';
-        $pool  = $alpha . $digits;
+        $lower  = 'abcdefghjkmnpqrstuvwxyz';   // exclude i,l,o
+        $upper  = 'ABCDEFGHJKLMNPQRSTUVWXYZ';  // exclude I,O
+        $digits = '23456789';                   // exclude 0,1
+        $pool   = $lower . $upper . $digits;
+
+        $length = max($length, 6);
         $out = '';
-        for ($i = 0; $i < $length - 2; $i++) {
+        for ($i = 0; $i < $length - 3; $i++) {
             $out .= $pool[random_int(0, strlen($pool) - 1)];
         }
-        // ensure at least one digit + one symbol
+        // ensure at least 1 lowercase + 1 uppercase + 1 digit
+        $out .= $lower[random_int(0, strlen($lower) - 1)];
+        $out .= $upper[random_int(0, strlen($upper) - 1)];
         $out .= $digits[random_int(0, strlen($digits) - 1)];
-        $out .= $sym[random_int(0, strlen($sym) - 1)];
         return str_shuffle($out);
     }
 

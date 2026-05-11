@@ -2,7 +2,7 @@
 @section('title', $device->name)
 
 @section('content')
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
     <div>
         <h1 class="text-xl font-bold">{{ $device->name }}</h1>
         <div class="text-sm text-ink/55 font-mono">{{ $device->host }}:{{ $device->api_port }}</div>

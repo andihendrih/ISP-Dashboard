@@ -28,6 +28,14 @@ class LoginController extends Controller
                 Auth::logout();
                 return back()->withErrors(['email' => 'Akun Anda dinonaktifkan.']);
             }
+            // Block kalau tenant-nya suspended (superadmin bypass — gak terikat tenant subscription)
+            if ($user->tenant_id && $user->role?->name !== 'superadmin') {
+                $tenant = $user->tenant;
+                if ($tenant && !$tenant->is_active) {
+                    Auth::logout();
+                    return back()->withErrors(['email' => 'Tenant Anda sedang nonaktif/suspended. Hubungi admin platform untuk reaktivasi.']);
+                }
+            }
             $request->session()->regenerate();
             return redirect()->intended(route('dashboard'));
         }

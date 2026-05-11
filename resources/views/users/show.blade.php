@@ -16,7 +16,7 @@
     <div class="bg-white rounded-xl border border-cream-deep/60 p-5">
         <div class="font-semibold mb-3">Customer Profile</div>
         @if($customer)
-            <dl class="grid grid-cols-2 gap-2 text-sm">
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <dt class="text-ink/55">Nama</dt><dd>{{ $customer->full_name }}</dd>
                 <dt class="text-ink/55">Telp</dt><dd>{{ $customer->phone ?? '—' }}</dd>
                 <dt class="text-ink/55">Paket</dt><dd>{{ $customer->package ?? '—' }}</dd>

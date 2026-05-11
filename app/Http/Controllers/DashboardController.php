@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomerProfile;
+use App\Models\Invoice;
 use App\Models\Radius\Radacct;
 use App\Services\RadiusService;
 use Illuminate\Http\Request;
@@ -42,6 +43,25 @@ class DashboardController extends Controller
             $perMonth[$m] = ($perMonth[$m] ?? 0) + 1;
         }
 
+        // Bar: pemasukan per bulan tahun ini (dari invoice paid_amount, status=lunas)
+        $revenuePerMonth = array_fill(1, 12, 0.0);
+        try {
+            $invoiceRows = Invoice::query()
+                ->where('status', Invoice::STATUS_LUNAS)
+                ->where('period_year', $year)
+                ->selectRaw('period_month as m, COALESCE(SUM(paid_amount), 0) as total')
+                ->groupBy('period_month')
+                ->get();
+            foreach ($invoiceRows as $r) {
+                $m = (int) $r->m;
+                if ($m >= 1 && $m <= 12) {
+                    $revenuePerMonth[$m] = (float) $r->total;
+                }
+            }
+        } catch (\Throwable $e) {
+            // table mungkin belum ada di env lama
+        }
+
         // Kesehatan layanan
         try {
             $billingActive    = CustomerProfile::where('status', 'active')->count();
@@ -64,6 +84,25 @@ class DashboardController extends Controller
             $online = null;
         }
 
+        // Billing snapshot (best-effort, table mungkin belum ada di env lama)
+        try {
+            $billingSnapshot = [
+                'outstanding'        => (float) Invoice::query()
+                    ->whereIn('status', [Invoice::STATUS_BELUM_LUNAS, Invoice::STATUS_TERLAMBAT])
+                    ->selectRaw('COALESCE(SUM(total_amount - paid_amount), 0) as v')
+                    ->value('v'),
+                'belum_lunas_count'  => Invoice::where('status', Invoice::STATUS_BELUM_LUNAS)->count(),
+                'terlambat_count'    => Invoice::where('status', Invoice::STATUS_TERLAMBAT)->count(),
+                'lunas_bulan_ini'    => (float) Invoice::query()
+                    ->where('status', Invoice::STATUS_LUNAS)
+                    ->where('period_year', Carbon::now()->year)
+                    ->where('period_month', Carbon::now()->month)
+                    ->sum('paid_amount'),
+            ];
+        } catch (\Throwable $e) {
+            $billingSnapshot = null;
+        }
+
         return view('dashboard.index', [
             'year'            => $year,
             'totalPelanggan'  => $totalPelanggan,
@@ -72,6 +111,7 @@ class DashboardController extends Controller
             'isolir'          => $isolir,
             'statusBuckets'   => $statusBuckets,
             'perMonth'        => array_values($perMonth),
+            'revenuePerMonth' => array_values($revenuePerMonth),
             'kesehatan'       => [
                 'billing_active'     => $billingActive,
                 'billing_non_active' => $billingNonActive,
@@ -79,6 +119,7 @@ class DashboardController extends Controller
             ],
             'pelangganTerbaru' => $pelangganTerbaru,
             'online'           => $online,
+            'billing'          => $billingSnapshot,
         ]);
     }
 }
