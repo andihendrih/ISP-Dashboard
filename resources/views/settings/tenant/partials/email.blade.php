@@ -87,3 +87,13 @@
         <button class="px-5 py-2 bg-ink text-white rounded-xl shadow-card hover:bg-black text-sm">Simpan Email</button>
     </div>
 </form>
+
+<div class="mt-4 pt-4 border-t border-cream-deep/60">
+    <h3 class="font-bold text-sm mb-2">Test Kirim Email</h3>
+    <p class="text-xs text-ink/55 mb-2">Kirim email test untuk verifikasi credential SMTP/SendGrid/Mailgun di atas berfungsi.</p>
+    <form method="POST" action="{{ route('settings.tenant_settings.email.test') }}" class="flex gap-2 flex-wrap">
+        @csrf
+        <input name="email" type="email" placeholder="test@example.com" class="flex-1 min-w-[200px] border border-ink/10 rounded-lg px-3 py-2 text-sm">
+        <button class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm hover:bg-emerald-700">Kirim Test</button>
+    </form>
+</div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\TenantSetting;
+use App\Services\Notifications\NotificationService;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -219,6 +220,30 @@ class TenantSettingsController extends Controller
      * Resolve tenant aktif: untuk tenant admin/finance = tenant mereka;
      * untuk superadmin = tenant yg lagi di view-as (kalo gak ada, default-nya tenant ahnet).
      */
+    /** Tombol "Test" di tab WhatsApp — kirim test pakai provider tenant aktif. */
+    public function testWa(Request $request, NotificationService $notif): RedirectResponse
+    {
+        $data = $request->validate(['phone' => ['required', 'string', 'max:30']]);
+        $tenant = $this->activeTenant();
+        $log = $notif->sendTestWaForTenant($tenant->id, $data['phone']);
+        if ($log->status === 'sent') {
+            return back()->with('success', "Test WA terkirim ke {$data['phone']}.");
+        }
+        return back()->with('error', 'Test WA gagal: ' . substr($log->provider_response, 0, 200));
+    }
+
+    /** Tombol "Test" di tab Email — kirim test pakai mailer tenant aktif. */
+    public function testEmail(Request $request, NotificationService $notif): RedirectResponse
+    {
+        $data = $request->validate(['email' => ['required', 'email', 'max:120']]);
+        $tenant = $this->activeTenant();
+        $log = $notif->sendTestEmailForTenant($tenant->id, $data['email']);
+        if ($log->status === 'sent') {
+            return back()->with('success', "Test email terkirim ke {$data['email']}.");
+        }
+        return back()->with('error', 'Test email gagal: ' . substr($log->provider_response, 0, 200));
+    }
+
     protected function activeTenant(): \App\Models\Tenant
     {
         $ctx = app(TenantContext::class);

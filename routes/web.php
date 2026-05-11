@@ -249,8 +249,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/brand',    [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateBrand'])->name('brand.update');
         Route::get('/whatsapp',  [\App\Http\Controllers\Settings\TenantSettingsController::class, 'whatsapp'])->name('whatsapp');
         Route::post('/whatsapp', [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateWhatsapp'])->name('whatsapp.update');
+        Route::post('/whatsapp/test', [\App\Http\Controllers\Settings\TenantSettingsController::class, 'testWa'])->name('whatsapp.test');
         Route::get('/email',     [\App\Http\Controllers\Settings\TenantSettingsController::class, 'email'])->name('email');
         Route::post('/email',    [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateEmail'])->name('email.update');
+        Route::post('/email/test', [\App\Http\Controllers\Settings\TenantSettingsController::class, 'testEmail'])->name('email.test');
         Route::get('/gateway',   [\App\Http\Controllers\Settings\TenantSettingsController::class, 'gateway'])->name('gateway');
         Route::post('/gateway',  [\App\Http\Controllers\Settings\TenantSettingsController::class, 'updateGateway'])->name('gateway.update');
     });
