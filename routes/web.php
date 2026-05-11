@@ -203,4 +203,40 @@ Route::middleware('auth')->group(function () {
         Route::post('/tenants/clear-switch',    [SettingsTenantController::class, 'clearSwitch'])->name('tenants.clear-switch');
         Route::post('/tenants/{tenant}/regenerate-admin-password', [SettingsTenantController::class, 'regenerateAdminPassword'])->name('tenants.regenerate-admin-password');
     });
+
+    /* Tenant Billing (SaaS subscription) — superadmin only */
+    Route::middleware('role:superadmin')->prefix('admin/tenant-billing')->name('tenant_billing.')->group(function () {
+        Route::get('/',                              [\App\Http\Controllers\Admin\TenantBillingController::class, 'index'])->name('index');
+
+        // Plans CRUD
+        Route::get('/plans',                         [\App\Http\Controllers\Admin\TenantPlanController::class, 'index'])->name('plans.index');
+        Route::get('/plans/create',                  [\App\Http\Controllers\Admin\TenantPlanController::class, 'create'])->name('plans.create');
+        Route::post('/plans',                        [\App\Http\Controllers\Admin\TenantPlanController::class, 'store'])->name('plans.store');
+        Route::get('/plans/{plan}/edit',             [\App\Http\Controllers\Admin\TenantPlanController::class, 'edit'])->name('plans.edit');
+        Route::put('/plans/{plan}',                  [\App\Http\Controllers\Admin\TenantPlanController::class, 'update'])->name('plans.update');
+        Route::delete('/plans/{plan}',               [\App\Http\Controllers\Admin\TenantPlanController::class, 'destroy'])->name('plans.destroy');
+
+        // Subscriptions
+        Route::get('/subscriptions',                 [\App\Http\Controllers\Admin\TenantBillingController::class, 'subscriptions'])->name('subscriptions.index');
+        Route::post('/subscriptions/subscribe',      [\App\Http\Controllers\Admin\TenantBillingController::class, 'subscribe'])->name('subscriptions.subscribe');
+        Route::post('/subscriptions/{sub}/cancel',   [\App\Http\Controllers\Admin\TenantBillingController::class, 'cancelSubscription'])->name('subscriptions.cancel');
+
+        // Invoices
+        Route::get('/invoices',                      [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoicesIndex'])->name('invoices.index');
+        Route::get('/invoices/{invoice}',            [\App\Http\Controllers\Admin\TenantBillingController::class, 'invoiceShow'])->name('invoices.show');
+        Route::post('/invoices/{invoice}/cancel',    [\App\Http\Controllers\Admin\TenantBillingController::class, 'cancelInvoice'])->name('invoices.cancel');
+        Route::post('/invoices/{invoice}/mark-paid', [\App\Http\Controllers\Admin\TenantBillingController::class, 'markPaid'])->name('invoices.mark-paid');
+
+        // Payments
+        Route::post('/invoices/{invoice}/payments',   [\App\Http\Controllers\Admin\TenantBillingController::class, 'storePayment'])->name('payments.store');
+        Route::post('/payments/{payment}/confirm',    [\App\Http\Controllers\Admin\TenantBillingController::class, 'confirmPayment'])->name('payments.confirm');
+        Route::post('/payments/{payment}/reject',     [\App\Http\Controllers\Admin\TenantBillingController::class, 'rejectPayment'])->name('payments.reject');
+    });
+
+    /* Tenant view: my subscription & invoices (semua role tenant kecuali customer) */
+    Route::prefix('billing/my-subscription')->name('my_subscription.')->group(function () {
+        Route::get('/',                       [\App\Http\Controllers\MySubscriptionController::class, 'index'])->name('index');
+        Route::get('/invoices/{invoice}',     [\App\Http\Controllers\MySubscriptionController::class, 'invoiceShow'])->name('invoices.show');
+        Route::post('/invoices/{invoice}/pay', [\App\Http\Controllers\MySubscriptionController::class, 'submitPayment'])->name('invoices.pay');
+    });
 });

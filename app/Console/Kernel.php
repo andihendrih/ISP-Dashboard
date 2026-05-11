@@ -21,6 +21,13 @@ class Kernel extends ConsoleKernel
 
         // Notifications: kirim reminder H-3, H-0, dan overdue setiap pagi 08:00
         $schedule->command('notify:reminders')->dailyAt('08:00')->withoutOverlapping();
+
+        // Tenant Billing (SaaS subscription) — superadmin nagih tenant
+        $cycleDay = (int) config('ahnet.tenant_billing.cycle_day', 1);
+        $schedule->command('tenant-billing:generate-monthly')->monthlyOn($cycleDay, '00:10')->withoutOverlapping();
+        $schedule->command('tenant-billing:mark-overdue')->dailyAt('00:40')->withoutOverlapping();
+        $schedule->command('tenant-billing:auto-suspend')->dailyAt('01:00')->withoutOverlapping();
+        $schedule->command('tenant-billing:notify')->dailyAt('08:15')->withoutOverlapping();
     }
 
     /**
