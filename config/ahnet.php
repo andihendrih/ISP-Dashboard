@@ -24,6 +24,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tenant Billing (SaaS subscription) — superadmin nagih tenant
+    |--------------------------------------------------------------------------
+    */
+    'tenant_billing' => [
+        // Hari grace period sebelum auto-suspend setelah due_date lewat
+        'grace_days' => (int) env('TENANT_BILLING_GRACE_DAYS', 7),
+        // Tanggal generate invoice baru (1 = tanggal 1 tiap bulan)
+        'cycle_day'  => (int) env('TENANT_BILLING_CYCLE_DAY', 1),
+        // Format invoice number: SUB-YYYY-MM-XXXX
+        'invoice_prefix' => env('TENANT_BILLING_INVOICE_PREFIX', 'SUB'),
+        // Reminder schedule (hari dari due_date, negatif=sebelum, positif=sesudah)
+        'reminder_days'  => [-3, -1, 1, 7],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Mikrotik default device
     |--------------------------------------------------------------------------
     */

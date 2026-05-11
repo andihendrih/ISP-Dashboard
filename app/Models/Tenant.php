@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Tenant extends Model
 {
@@ -63,6 +64,33 @@ class Tenant extends Model
             return false;
         }
         return $this->customers()->count() >= $this->max_customers;
+    }
+
+    /** Active subscription (1 tenant max 1 active). */
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(TenantSubscription::class)
+            ->whereIn('status', [
+                TenantSubscription::STATUS_TRIAL,
+                TenantSubscription::STATUS_ACTIVE,
+                TenantSubscription::STATUS_PAST_DUE,
+            ])
+            ->latestOfMany();
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(TenantSubscription::class);
+    }
+
+    public function tenantInvoices(): HasMany
+    {
+        return $this->hasMany(TenantInvoice::class);
+    }
+
+    public function tenantPayments(): HasMany
+    {
+        return $this->hasMany(TenantPayment::class);
     }
 
     /**
