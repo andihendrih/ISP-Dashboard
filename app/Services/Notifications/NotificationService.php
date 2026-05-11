@@ -7,6 +7,7 @@ use App\Models\CustomerProfile;
 use App\Models\Invoice;
 use App\Models\NotificationLog;
 use App\Models\NotificationSetting;
+use App\Models\Tenant;
 use App\Services\Notifications\Contracts\WaProvider;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +22,21 @@ class NotificationService
     public function provider(): WaProvider
     {
         return $this->wa;
+    }
+
+    /**
+     * Resolve WA provider untuk tenant tertentu (override global default).
+     * Dipakai oleh sendWa() supaya tiap tenant pake credential mereka sendiri.
+     */
+    protected function waFor(?int $tenantId): WaProvider
+    {
+        return $tenantId ? WaProviderFactory::forTenantId($tenantId) : $this->wa;
+    }
+
+    /** Resolve mailer untuk tenant (fallback ke global). */
+    protected function mailerFor(?int $tenantId)
+    {
+        return MailerFactory::forTenant($tenantId ? Tenant::find($tenantId) : null);
     }
 
     /**
@@ -55,6 +71,48 @@ class NotificationService
         }
 
         return $logs;
+    }
+
+    /** Test WA via provider tenant tertentu (untuk tombol "Test" di Settings Tenant). */
+    public function sendTestWaForTenant(int $tenantId, string $phone, string $body = 'Test koneksi WA tenant ✅'): NotificationLog
+    {
+        $log = NotificationLog::create([
+            'channel'   => 'wa',
+            'template'  => 'test',
+            'recipient' => $phone,
+            'body'      => $body,
+            'status'    => 'pending',
+        ]);
+        $wa = WaProviderFactory::forTenantId($tenantId);
+        $result = $wa->send($phone, $body);
+        $log->update([
+            'status'            => $result['ok'] ? 'sent' : 'failed',
+            'provider_response' => substr((string) $result['message'], 0, 1000),
+            'sent_at'           => $result['ok'] ? now() : null,
+        ]);
+        return $log;
+    }
+
+    /** Test email via mailer tenant tertentu. */
+    public function sendTestEmailForTenant(int $tenantId, string $email, string $subject = 'Test Email Tenant', string $body = 'Halo, ini test email dari portal ISP.'): NotificationLog
+    {
+        $log = NotificationLog::create([
+            'channel'   => 'email',
+            'template'  => 'test',
+            'recipient' => $email,
+            'subject'   => $subject,
+            'body'      => $body,
+            'status'    => 'pending',
+        ]);
+        try {
+            $mailer = $this->mailerFor($tenantId);
+            $mailer->to($email)->send(new InvoiceNotificationMail($subject, $body));
+            $log->update(['status' => 'sent', 'sent_at' => now(), 'provider_response' => 'OK']);
+        } catch (\Throwable $e) {
+            $log->update(['status' => 'failed', 'provider_response' => $e->getMessage()]);
+            Log::warning('Email test (tenant) failed: ' . $e->getMessage());
+        }
+        return $log;
     }
 
     public function sendTestWa(string $phone, string $body = 'Test koneksi WA AHNet 🚀'): NotificationLog
@@ -111,7 +169,8 @@ class NotificationService
             'invoice_id'          => $invoice?->id,
         ]);
 
-        $result = $this->wa->send($customer->phone, $body);
+        $wa = $this->waFor($customer->tenant_id);
+        $result = $wa->send($customer->phone, $body);
         $log->update([
             'status'            => $result['ok'] ? 'sent' : 'failed',
             'provider_response' => substr((string) $result['message'], 0, 1000),
@@ -135,7 +194,8 @@ class NotificationService
         ]);
 
         try {
-            Mail::to($customer->email)->send(new InvoiceNotificationMail(
+            $mailer = $this->mailerFor($customer->tenant_id);
+            $mailer->to($customer->email)->send(new InvoiceNotificationMail(
                 $payload['subject'],
                 $payload['body'],
                 $customer,
@@ -156,8 +216,16 @@ class NotificationService
      */
     private function renderTemplate(string $template, CustomerProfile $customer, ?Invoice $invoice): array
     {
+        // Brand & CS phone resolusi: setting tenant > config global
         $brand = config('ahnet.brand_name', config('app.name', 'AHNet'));
         $cs    = config('ahnet.outlet.cs_phone', config('ahnet.outlet.phone', '-'));
+        if ($customer->tenant_id) {
+            $setting = \App\Models\TenantSetting::firstWhere('tenant_id', $customer->tenant_id);
+            if ($setting) {
+                $brand = $setting->brand_name ?: $setting->tenant?->name ?: $brand;
+                $cs    = $setting->brand_phone ?: $cs;
+            }
+        }
         $name  = $customer->full_name;
 
         $invLine = '';
