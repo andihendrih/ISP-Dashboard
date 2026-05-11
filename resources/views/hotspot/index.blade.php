@@ -2,7 +2,7 @@
 @section('title','Hotspot Vouchers')
 
 @section('content')
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
     <div>
         <h1 class="text-xl font-bold">Hotspot Vouchers</h1>
         <p class="text-sm text-ink/55">Voucher hotspot terdaftar di FreeRADIUS (username = password).</p>
@@ -21,7 +21,7 @@
     <button class="px-3 py-1.5 bg-slate-700 text-white rounded-lg text-sm">Filter</button>
 </form>
 
-<div class="bg-white rounded-xl border border-cream-deep/60 shadow-sm overflow-hidden">
+<div class="bg-white rounded-xl border border-cream-deep/60 shadow-sm overflow-x-auto">
     <table class="min-w-full text-sm">
         <thead class="bg-cream-card text-ink/65">
             <tr>
